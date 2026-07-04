@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 — Scores, Playstyles & Predictions</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>⚽ World Cup <span class="accent">2026</span> Dashboard</h1>
+    <p class="subtitle">Snapshot as of July 4, 2026 — Round of 16 kicks off today</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="scores">Scores &amp; Bracket</button>
+    <button class="tab-btn" data-tab="styles">Team Playstyles</button>
+    <button class="tab-btn" data-tab="predictions">Predictions</button>
+  </nav>
+
+  <main>
+    <section id="scores" class="tab-panel active">
+      <h2>Round of 32 — Results</h2>
+      <div id="results-table"></div>
+
+      <h2>Upcoming Fixtures</h2>
+      <div id="fixtures-table"></div>
+    </section>
+
+    <section id="styles" class="tab-panel">
+      <h2>Team Playstyles</h2>
+      <div class="style-filters" id="style-filters"></div>
+      <div id="teams-grid" class="teams-grid"></div>
+    </section>
+
+    <section id="predictions" class="tab-panel">
+      <h2>Predictions — All Upcoming Matches</h2>
+      <p class="disclaimer">Heuristic model for fun: blends a team strength rating with a playstyle matchup bonus (e.g. counter-attack vs. possession). Not a real forecasting service!</p>
+      <div id="predictions-list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Data is a manual snapshot — edit <code>data.js</code> to refresh scores as the tournament progresses.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="predict.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
