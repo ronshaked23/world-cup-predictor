@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Cup 2026 — Scores, Playstyles & Predictions</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
   <header>
     <h1>⚽ World Cup <span class="accent">2026</span> Dashboard</h1>
-    <p class="subtitle">Snapshot as of July 4, 2026 — Round of 16 kicks off today</p>
+    <p class="subtitle">Updated July 5, 2026</p>
   </header>
 
   <nav class="tabs">
@@ -29,13 +29,18 @@
 
     <section id="styles" class="tab-panel">
       <h2>Team Playstyles</h2>
+      <p class="ratings-legend">
+        <strong>Strength</strong> — long-term squad talent; barely moves all tournament.
+        <strong>Momentum</strong> — computed from real records: 65% WC qualifiers + 25% last tournament ⇄ Nations League + 10% friendlies vs similarly-ranked teams, all opponent-adjusted (why England rate high and Brazil — worst qualifying campaign ever — don't).
+        <strong>Tournament form</strong> — this World Cup only, schedule-adjusted and recomputed after every game (why Mexico's number spiked).
+      </p>
       <div class="style-filters" id="style-filters"></div>
       <div id="teams-grid" class="teams-grid"></div>
     </section>
 
     <section id="predictions" class="tab-panel">
       <h2>Predictions — All Upcoming Matches</h2>
-      <p class="disclaimer">Heuristic model for fun: blends a team strength rating with a playstyle matchup bonus (e.g. counter-attack vs. possession). Not a real forecasting service!</p>
+      <p class="disclaimer">Heuristic model for fun. Scorelines come from an attack-vs-defence Poisson model (like a bookmaker's correct-score market); the game-state scenarios encode modern-era football tendencies (how the goal rate shifts once a team leads), not a live match database. Not a real forecasting service!</p>
       <div id="predictions-list"></div>
     </section>
   </main>
@@ -44,8 +49,9 @@
     <p>Data is a manual snapshot — edit <code>data.js</code> to refresh scores as the tournament progresses.</p>
   </footer>
 
-  <script src="data.js"></script>
-  <script src="predict.js"></script>
-  <script src="app.js"></script>
+  <!-- bump ?v= when editing these files so browsers don't serve stale copies -->
+  <script src="data.js?v=24"></script>
+  <script src="predict.js?v=24"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

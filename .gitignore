@@ -1,0 +1,5 @@
+# Telegram-delivery build artifacts + script — kept OUT of the public repo
+# (unrelated to the browser site; bundle.ps1 also embeds local desktop paths).
+standalone.html
+static_snapshot.html
+bundle.ps1
