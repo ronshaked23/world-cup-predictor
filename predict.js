@@ -83,13 +83,26 @@ function goalMatchupMul(atkStyle, defStyle) { return 1 + matchupBonus(atkStyle, 
 // than dominates — but it's independent of strength/momentum/form, which is
 // exactly what lets it break otherwise-deadlocked matchups.
 function tacticalOf(name) {
-  return (typeof TACTICAL !== "undefined" && TACTICAL[name]) || { pace: 5, line: 5 };
+  const t = (typeof TACTICAL !== "undefined" && TACTICAL[name]) || {};
+  return { pace: t.pace != null ? t.pace : 5, line: t.line != null ? t.line : 5, defSpeed: t.defSpeed != null ? t.defSpeed : 5 };
 }
+// Pace vs line, GATED by defender recovery speed. A high line only leaks to a
+// pacy attack if that attack can actually out-run the defenders covering the
+// space — fast fullbacks (Nuno Mendes / Walker / Akanji) neutralize it even
+// behind a high line. Against a deep block the pace is wasted regardless of
+// defender speed (there's no space in behind to run into).
+// NOTE: with a neutral defSpeed of 5 this reduces EXACTLY to the previous
+// pace-vs-line formula, so it's backtest-neutral until real defSpeed values
+// are populated — then only high-line matchups shift.
 function paceLineMul(attName, defName) {
   const att = tacticalOf(attName), def = tacticalOf(defName);
-  const paceExcess = Math.max(0, (att.pace - 5) / 5); // 0..1, only pacy fronts trigger it
-  const lineFactor = (def.line - 5) / 5;              // +high line .. -deep block
-  return clamp(1 + 0.12 * paceExcess * lineFactor, 0.9, 1.12);
+  const space = (def.line - 5) / 5; // +high line (space in behind) .. -deep block
+  if (space >= 0) {
+    const paceSup = clamp((att.pace - def.defSpeed) / 5, 0, 1); // does the attack out-pace the D?
+    return clamp(1 + 0.12 * space * paceSup, 0.9, 1.14);
+  }
+  const paceExcess = Math.max(0, (att.pace - 5) / 5);
+  return clamp(1 + 0.12 * space * paceExcess, 0.9, 1.12); // deep block: pace wasted
 }
 
 // ---------------------------------------------------------------------------

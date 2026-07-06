@@ -312,6 +312,25 @@ h2:first-child { margin-top: 0; }
   gap: 8px;
   flex-wrap: wrap;
 }
+.header-right { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Click-to-collapse a game's analysis */
+.pred-summary { cursor: pointer; border-radius: 8px; }
+.pred-summary:hover { background: rgba(255, 255, 255, 0.02); }
+.pred-summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.collapse-chevron {
+  color: var(--muted);
+  font-size: 0.8rem;
+  transition: transform 0.18s ease;
+  display: inline-block;
+}
+.prediction-card.collapsed .collapse-chevron { transform: rotate(-90deg); }
+.prediction-card.collapsed .pred-body { display: none; }
+/* When collapsed, tighten the summary so it reads as a compact one-glance row */
+.prediction-card.collapsed .prob-legend { display: none; }
+.prediction-card.collapsed .prediction-matchup { margin-bottom: 8px; }
+.prediction-card.collapsed .pred-xg,
+.prediction-card.collapsed .pred-common { display: none; }
 
 .conf-chip {
   font-size: 0.66rem;

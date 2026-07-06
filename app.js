@@ -160,9 +160,10 @@ function renderPredictions() {
 
     return `
       <div class="prediction-card" data-idx="${idx}">
+        <div class="pred-summary" role="button" tabindex="0" aria-expanded="true" title="Click to collapse/expand this game">
         <div class="prediction-header">
           <span>${f.round} · ${f.date} · ${f.venue}${f.note ? " — " + f.note : ""}</span>
-          <span class="conf-chip conf-${p.confidence.level.toLowerCase()}" title="${p.confidence.why}">${p.confidence.level} confidence</span>
+          <span class="header-right"><span class="conf-chip conf-${p.confidence.level.toLowerCase()}" title="${p.confidence.why}">${p.confidence.level} confidence</span><span class="collapse-chevron">▾</span></span>
         </div>
         <div class="prediction-matchup">
           <div class="pred-team">
@@ -183,6 +184,8 @@ function renderPredictions() {
           <div class="prob-fill-d" style="width:${pctD}%">${pctD}%</div>
           <div class="prob-fill-b" style="width:${pctB}%">${pctB}%</div>
         </div>
+        </div>
+        <div class="pred-body">
         ${p.confidence.level !== "High" ? `<p class="confidence-why conf-why-${p.confidence.level.toLowerCase()}"><strong>${p.confidence.level} confidence:</strong> ${p.confidence.why}</p>` : ""}
         ${p.penaltiesLikely ? '<p class="penalty-note">High draw probability — a real chance of extra time and penalties.</p>' : ""}
         <p class="reasoning">${p.reasoning}</p>
@@ -213,6 +216,7 @@ function renderPredictions() {
           <h4>Most Likely Correct Scores</h4>
           <div class="odds-row">${oddsHtml}</div>
         </div>
+        </div>
       </div>`;
   }).join("");
 
@@ -223,6 +227,20 @@ function renderPredictions() {
       const open = details.classList.toggle("open");
       btn.classList.toggle("open", open);
       btn.textContent = open ? "Stats, Scenarios & Correct Score Odds ▲" : "Stats, Scenarios & Correct Score Odds ▾";
+    });
+  });
+
+  // Click a game's summary to collapse/expand its whole analysis, so games
+  // you're not focused on can be tucked away to just the pick + odds bar.
+  const toggleCard = (summary) => {
+    const card = summary.closest(".prediction-card");
+    const collapsed = card.classList.toggle("collapsed");
+    summary.setAttribute("aria-expanded", String(!collapsed));
+  };
+  container.querySelectorAll(".pred-summary").forEach(summary => {
+    summary.addEventListener("click", () => toggleCard(summary));
+    summary.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleCard(summary); }
     });
   });
 }

@@ -37,8 +37,9 @@ const TEAMS = {
   "Spain":                  { code: "es", flag: "🇪🇸", strength: 90, momentum: 94, form: 92, style: "POSSESSION",
     formNote: "Swept Austria aside 3-0 — arguably the most complete performance of the round of 32.",
     blurb: "Modern tiki-taka heir: relentless short passing to suffocate opponents out of the game." },
-  "Brazil":                 { code: "br", flag: "🇧🇷", strength: 88, momentum: 82, form: 84, style: "POSSESSION",
-    formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like.",
+  "Brazil":                 { code: "br", flag: "🇧🇷", strength: 88, momentum: 82, form: 84, style: "POSSESSION", eliminated: true,
+    eliminatedNote: "Out — beaten 2-1 by Norway in the round of 16 (Haaland scored twice in the final 11 minutes); Neymar's stoppage-time penalty was too little too late.",
+    formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
     blurb: "Technical, flair-driven possession built around quick combinations in tight spaces." },
   "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED",
     formNote: "Edged DR Congo 2-1 — not pretty, but this side has barely lost a competitive match under its current manager in nearly two years.",
@@ -80,8 +81,9 @@ const TEAMS = {
   "Switzerland":            { code: "ch", flag: "🇨🇭", strength: 78, momentum: 80, form: 82, style: "BALANCED",
     formNote: "Tidy 2-0 win over Algeria — still hasn't had to chase a game this tournament.",
     blurb: "Extremely well organized, rarely beaten twice, efficient rather than flashy." },
-  "Mexico":                 { code: "mx", flag: "🇲🇽", strength: 77, momentum: 74, form: 84, style: "POSSESSION",
-    formNote: "Comfortable 2-0 over Ecuador at the Azteca, but that's against modest group opposition — this squad's underlying record over the last two years is solid CONCACAF-tier, not knockout-of-England tier.",
+  "Mexico":                 { code: "mx", flag: "🇲🇽", strength: 77, momentum: 74, form: 84, style: "POSSESSION", eliminated: true,
+    eliminatedNote: "Out — beaten 3-2 by England in the round of 16 at the Azteca, despite Quiñones and a Jiménez penalty pulling it back to 3-2; a red card to England's Quansah (54') wasn't enough to turn the tie. First-ever quarterfinal bid ends in the round of 16.",
+    formNote: "Comfortable 2-0 over Ecuador at the Azteca, but that's against modest group opposition — this squad's underlying record over the last two years is solid CONCACAF-tier, not knockout-of-England tier — and it showed in a 3-2 round of 16 exit to England.",
     blurb: "Comfortable in possession, looks to control games at home in front of its crowd." },
   "Austria":                { code: "at", flag: "🇦🇹", strength: 77, momentum: 79, form: 70, style: "PRESS", eliminated: true,
     formNote: "Out — pressed high against Spain and was picked apart 3-0.",
@@ -142,14 +144,16 @@ const TEAMS = {
 // (the "Olise vs a park-the-bus side" effect).
 // ---------------------------------------------------------------------------
 // RULE: only players who are actually AT this World Cup, regular starters
-// (3+ games), and currently fit. Verified against squad/injury news July 5:
+// (3+ games), and currently fit. Verified against squad/injury news July 6:
+// Nico Williams (adductor injury, ruled out of the round of 16 vs Portugal;
+// Dani Olmo starts in his place and takes the #3 creative slot).
 // Rodrygo (ACL, never made the squad), Raphinha (hamstring, out vs Norway),
 // Foden & Palmer (not in Tuchel's 26), Griezmann (retired from France duty
 // 2024), Shaqiri (retired from Switzerland duty 2024) all removed.
 const PLAYMAKERS = {
   "Argentina":   [{ name: "Messi", creativity: 9.8 }, { name: "Julián Álvarez", creativity: 8.6 }, { name: "Enzo Fernández", creativity: 8.4 }],
   "France":      [{ name: "Mbappé", creativity: 9.5 }, { name: "Dembélé", creativity: 9.0 }, { name: "Olise", creativity: 8.8 }],
-  "Spain":       [{ name: "Lamine Yamal", creativity: 9.4 }, { name: "Pedri", creativity: 9.0 }, { name: "Nico Williams", creativity: 8.5 }],
+  "Spain":       [{ name: "Lamine Yamal", creativity: 9.4 }, { name: "Pedri", creativity: 9.0 }, { name: "Dani Olmo", creativity: 8.6 }],
   "Brazil":      [{ name: "Vinícius Jr", creativity: 9.3 }, { name: "Paquetá", creativity: 8.2 }, { name: "Matheus Cunha", creativity: 8.0 }],
   "England":     [{ name: "Bellingham", creativity: 9.2 }, { name: "Saka", creativity: 8.9 }, { name: "Kane", creativity: 8.8 }],
   "Portugal":    [{ name: "Bruno Fernandes", creativity: 9.0 }, { name: "Bernardo Silva", creativity: 8.8 }, { name: "Leão", creativity: 8.3 }],
@@ -228,21 +232,27 @@ const MOMENTUM_PEDIGREE = {
 //   pace = attacking threat in behind (Vinícius/Mbappé high, control sides low)
 //   line = defensive line height (possession sides high, park-the-bus low)
 // ---------------------------------------------------------------------------
+// pace = attacking threat in behind (fastest 2-3 ATTACKERS actually starting);
+// line = defensive line height; defSpeed = recovery pace of the actual back
+// line, weighted to the FULLBACKS. Player identities verified against real
+// 2026 squad/XI data (July 6) — same rule as PLAYMAKERS: only players who
+// actually start this WC. Values are calibrated from those confirmed starters'
+// known pace; FIFA sprint-speed validation is a further refinement.
 const TACTICAL = {
-  "Brazil":      { pace: 9, line: 6 },  // Vinícius + teenage Rayan, genuinely rapid; Ancelotti line moderate
-  "Norway":      { pace: 7, line: 7 },  // Haaland/Nusa pace but more power than burst; got caught high by France
-  "France":      { pace: 10, line: 6 }, // Mbappé + Dembélé — the fastest front in the tournament
-  "Spain":       { pace: 7, line: 8 },  // Yamal/Nico quick, but the point is the very high possession line
-  "Portugal":    { pace: 8, line: 5 },  // Leão in transition; sits deeper to counter
-  "England":     { pace: 7, line: 5 },  // Saka pace; Tuchel controlled, mid line
-  "Belgium":     { pace: 8, line: 5 },  // Doku burst; mid-block counter
-  "Argentina":   { pace: 6, line: 6 },  // more control than raw pace now
-  "Mexico":      { pace: 6, line: 6 },
-  "Colombia":    { pace: 7, line: 6 },  // Luis Díaz; presses fairly high
-  "USA":         { pace: 7, line: 6 },  // Pulisic/Weah; press high
-  "Switzerland": { pace: 5, line: 5 },  // organized, neither fast nor high
-  "Egypt":       { pace: 7, line: 3 },  // Salah is rapid, but the team sits DEEP — pace on the counter only
-  "Morocco":     { pace: 7, line: 3 },  // Hakimi/Adli pace off a low block
+  "France":      { pace: 10, line: 6, defSpeed: 8 }, // Mbappé/Olise fast; Koundé+Saliba+Upamecano genuinely quick behind
+  "Spain":       { pace: 8,  line: 8, defSpeed: 4 }, // Yamal/Nico pace + VERY high line — but NO Carvajal; Laporte/Grimaldo/Cucurella aren't quick → line is exploitable
+  "England":     { pace: 7,  line: 5, defSpeed: 4 }, // Saka pace; RB is Alexander-Arnold (NOT Walker) — going-forward FB, modest recovery pace → back line is beatable for speed
+  "Argentina":   { pace: 6,  line: 6, defSpeed: 3 }, // control over raw pace up top; Otamendi (38) + Tagliafico (aging) = slow back line
+  "Portugal":    { pace: 8,  line: 5, defSpeed: 7 }, // Leão/Conceição in transition; Nuno Mendes elite recovery pace at LB (blunts pacy wingers), sits deeper to counter
+  "Belgium":     { pace: 8,  line: 5, defSpeed: 5 }, // Doku burst; Castagne/De Cuyper/Theate moderate; mid-block counter
+  "Norway":      { pace: 7,  line: 7, defSpeed: 4 }, // Nusa + a deceptively-quick Haaland; but a high-ish line WITHOUT recovery pace — why France ran them 4-1
+  "Colombia":    { pace: 8,  line: 6, defSpeed: 5 }, // Luis Díaz elite pace, Muñoz quick RB; presses fairly high
+  "USA":         { pace: 7,  line: 6, defSpeed: 5 }, // Pulisic/Weah quick; Antonee Robinson fast at LB but Ream slow at CB; press high
+  "Morocco":     { pace: 7,  line: 3, defSpeed: 6 }, // Hakimi/Mazraoui/Ait-Nouri are quick fullbacks — but off a deep low block, so pace shows on the counter
+  "Switzerland": { pace: 6,  line: 5, defSpeed: 5 }, // Ndoye quick; Akanji fast CB but Rodríguez aging; organized mid line
+  "Mexico":      { pace: 6,  line: 6, defSpeed: 5 }, // Quiñones quick; back line moderate
+  "Egypt":       { pace: 7,  line: 3, defSpeed: 4 }, // Salah/Marmoush rapid on the break, but the team sits DEEP so it's counter-pace only
+  "Brazil":      { pace: 9,  line: 6, defSpeed: 5 }, // (eliminated by Norway) Vinícius pace; Marquinhos/Danilo moderate
 };
 
 // How much an opponent's defensive approach blunts or enables creative
@@ -283,21 +293,23 @@ const RESULTS = [
   { round: "Round of 32", date: "Jul 3", a: "Colombia", b: "Ghana", scoreA: 1, scoreB: 0, note: "", goalsA: [14], goalsB: [] },
   { round: "Round of 16", date: "Jul 4", a: "Canada", b: "Morocco", scoreA: 0, scoreB: 3, note: "" },
   { round: "Round of 16", date: "Jul 4", a: "Paraguay", b: "France", scoreA: 0, scoreB: 1, note: "" },
+  { round: "Round of 16", date: "Jul 5", a: "Brazil", b: "Norway", scoreA: 1, scoreB: 2, note: "", goalsA: [90], goalsB: [79, 90] },
+  { round: "Round of 16", date: "Jul 5", a: "Mexico", b: "England", scoreA: 2, scoreB: 3, note: "", goalsA: [42, 69], goalsB: [36, 38, 60] },
 ];
 
 // Upcoming fixtures — everything still to be played. The Predictions tab
 // covers all of these. venueCountry powers the home-advantage bump for the
 // three host nations.
 const FIXTURES = [
-  { round: "Round of 16", date: "Jul 5", venue: "New Jersey",   venueCountry: "US", a: "Brazil",      b: "Norway",
-    insight: "Brazil arrive without both first-choice wide creators: Rodrygo never made the tournament (ACL in March) and Raphinha's hamstring rules him out of this one, so 19-year-old Rayan keeps the right wing alongside Vinícius, Paquetá and Matheus Cunha — Neymar is fit but starts on the bench. That concentrates the creativity on one flank and asks a teenager to handle knockout pressure. Norway are exactly the wrong opponent to be short-handed against: a high-pressing 4-3-3 that feeds Haaland (4 goals in 2 group starts) in behind, Ødegaard as the creative hub, and genuine aerial artillery — Sørloth at 6'5\" plus set-piece size all over the pitch. Brazil's technicians should control the ball, but the physical mismatch at both boxes and the inexperience on the right make Brazil's win probability feel like a ceiling, not a floor. If Norway score first and get to drop Haaland and Sørloth onto a chasing Brazil, this flips fast." },
-  { round: "Round of 16", date: "Jul 5", venue: "Mexico City",  venueCountry: "MX", a: "Mexico",      b: "England" },
-  { round: "Round of 16", date: "Jul 6", venue: "Dallas",       venueCountry: "US", a: "Spain",       b: "Portugal" },
+  { round: "Round of 16", date: "Jul 6", venue: "Dallas",       venueCountry: "US", a: "Spain",       b: "Portugal",
+    insight: "Spain lose Nico Williams (adductor) for this one — confirmed out, alongside the already-sidelined Yeremy Pino (shoulder) — so Dani Olmo takes the #10 role and the third creative slot alongside Yamal and Pedri in the confirmed XI (Simón; Porro, Cubarsí, Laporte, Cucurella; Rodri, Pedri; Yamal, Olmo, Baena; Oyarzabal). Olmo isn't a like-for-like wide outlet — he drifts inside rather than stretching the width Williams offered — but he's started every game since the opener and gives Spain a more central second creator to pair with Yamal. Portugal have no fresh fitness concerns and go with their expected spine (Rodri's opposite number Vitinha/Neves, Bruno Fernandes, Leão, Ronaldo)." },
   { round: "Round of 16", date: "Jul 6", venue: "Seattle",      venueCountry: "US", a: "USA",         b: "Belgium",
-    insight: "USA go into this one without starting striker Folarin Balogun, who was sent off (VAR-reviewed studs-up challenge) against Bosnia and Herzegovina and — with no appeal route under FIFA's rules — is automatically suspended for the round of 16. Balogun had scored the USA's opener in that game, so his pace and hold-up play through the middle are gone against a Belgium back line that will be happy to sit deeper knowing the USA's most direct central outlet is on the bench. Expect Pepi or Wright to lead the line instead, with the press still built around Pulisic and McKennie doing the heavy lifting from wide/midfield areas." },
+    insight: "USA get a boost here: Folarin Balogun's red card against Bosnia and Herzegovina looked set to rule him out automatically, but FIFA's disciplinary committee suspended the ban itself (a probationary year, same treatment given to Ronaldo pre-tournament) rather than overturning the red card — so Balogun is confirmed available and expected to start up front. Belgium's federation has publicly objected to the ruling and is exploring a challenge, but as things stand USA keep their most direct central striker and the pace/hold-up threat he offers against a Belgium back line that would have preferred to sit on a weakened USA attack." },
   { round: "Round of 16", date: "Jul 7", venue: "Atlanta",      venueCountry: "US", a: "Argentina",   b: "Egypt" },
-  { round: "Round of 16", date: "Jul 7", venue: "Vancouver",    venueCountry: "CA", a: "Switzerland", b: "Colombia" },
+  { round: "Round of 16", date: "Jul 7", venue: "Vancouver",    venueCountry: "CA", a: "Switzerland", b: "Colombia",
+    insight: "Colombia will be without striker Jhon Córdoba, ruled out for the rest of the tournament with a muscle tear. He wasn't one of Colombia's rated creative trio, but he was part of the striker rotation — that leaves only Luis Suárez and Cucho Hernández as recognized out-and-out forwards for the rest of the run. Luis Díaz remains the focal creative point regardless and this doesn't change Colombia's rated attackers, but the squad has less centre-forward cover than a week ago." },
   { round: "Quarterfinal", date: "Jul 9", venue: "Boston",      venueCountry: "US", a: "Morocco",     b: "France" },
+  { round: "Quarterfinal", date: "Jul 11", venue: "Miami Gardens", venueCountry: "US", a: "Norway",   b: "England" },
 ];
 
 // ---------------------------------------------------------------------------
