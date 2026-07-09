@@ -116,6 +116,44 @@ h2:first-child { margin-top: 0; }
   font-size: 0.87rem;
 }
 
+.match-block { margin-bottom: 6px; }
+.match-block .match-row { margin-bottom: 0; }
+
+.pred-line {
+  font-size: 0.74rem;
+  color: var(--muted);
+  padding: 4px 12px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pred-line strong { color: var(--ink); }
+.pred-pts { font-weight: 800; }
+.pred-cat { font-size: 0.68rem; }
+.pred-exact  { border-left: 3px solid var(--green); }
+.pred-exact .pred-pts, .pred-exact .pred-cat { color: var(--green); }
+.pred-winner { border-left: 3px solid var(--gold); }
+.pred-winner .pred-pts, .pred-winner .pred-cat { color: var(--gold); }
+.pred-miss   { border-left: 3px solid #6b3a3f; }
+.pred-miss .pred-pts, .pred-miss .pred-cat { color: #b06a6a; }
+
+.pred-summary-bar {
+  background: linear-gradient(135deg, #14140a 0%, #1a1a10 100%);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.pred-summary-bar strong { color: var(--gold); font-size: 1.05rem; }
+.pred-summary-sub { color: var(--muted); font-size: 0.76rem; font-weight: 400; }
+
 .match-row.pending { opacity: 0.55; font-style: italic; }
 .match-row.fixture { border-left: 3px solid var(--gold); }
 
@@ -443,6 +481,27 @@ h2:first-child { margin-top: 0; }
 .timing-profile strong { color: var(--gold); }
 
 .timing-src { color: #6b6b6b; font-style: italic; }
+
+.pace-line-profile {
+  font-size: 0.76rem;
+  color: #b8b29e;
+  background: #141810;
+  border: 1px solid #26301c;
+  border-left: 3px solid #6aa84f;
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+.pl-label {
+  font-weight: 800;
+  color: #8bd06a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 0.66rem;
+  margin-right: 4px;
+}
+.pl-nums { color: #6b6b6b; }
 .burst-note {
   font-size: 0.76rem;
   color: #d9b64a;

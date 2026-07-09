@@ -43,7 +43,7 @@ const STYLE_GOALS = {
   POSSESSION: { atk: 1.15, def: 0.85 },
   PRESS:      { atk: 1.12, def: 1.00 },
   COUNTER:    { atk: 1.12, def: 0.85 },
-  PARK_BUS:   { atk: 0.72, def: 0.66 },
+  PARK_BUS:   { atk: 0.72, def: 0.74 }, // softened vs QF market: 0.66 over-rewarded bus defenses, inflating draws + underdog upsets vs elite attacks
   DIRECT:     { atk: 1.08, def: 1.12 },
   TOTAL:      { atk: 1.20, def: 0.92 },
   BALANCED:   { atk: 1.00, def: 0.92 },
@@ -69,7 +69,7 @@ function effectiveRating(team, formOverride) {
   const form = formOverride != null ? formOverride : team.form;
   return 0.40 * team.strength + 0.35 * momentum + 0.25 * form;
 }
-function strengthFactor(team, formOverride) { return 1 + (effectiveRating(team, formOverride) - 79) / 32; } // ~0.65 .. 1.42 (sharpened in market calibration)
+function strengthFactor(team, formOverride) { return 1 + (effectiveRating(team, formOverride) - 79) / 26; } // sharpened again vs QF market — model was underrating favourites (backtest 44→48, market gap 40→30)
 
 // Style match-up as an xG multiplier (reuses the rating table, ~±16%).
 function goalMatchupMul(atkStyle, defStyle) { return 1 + matchupBonus(atkStyle, defStyle) * 0.02; }
@@ -103,6 +103,34 @@ function paceLineMul(attName, defName) {
   }
   const paceExcess = Math.max(0, (att.pace - 5) / 5);
   return clamp(1 + 0.12 * space * paceExcess, 0.9, 1.12); // deep block: pace wasted
+}
+
+// Human-readable summary of the pace-vs-line duel for a card. Describes each
+// attacking direction that has a meaningful edge (or the interesting "fast
+// fullbacks cover a high line" neutralization), so the model factor is visible.
+function paceMatchupNote(nameA, nameB) {
+  const tA = tacticalOf(nameA), tB = tacticalOf(nameB);
+  const describe = (attName, att, defName, def) => {
+    const mul = paceLineMul(attName, defName);
+    const pct = Math.round((mul - 1) * 100);
+    if (mul >= 1.02) return `${attName}'s pace (${att.pace}) runs in behind ${defName}'s high line (+${pct}% xG)`;
+    if (mul <= 0.98) {
+      return def.line <= 4
+        ? `${attName}'s pace is smothered by ${defName}'s deep block (${pct}%)`
+        : `${defName} blunts ${attName}'s pace (${pct}%)`;
+    }
+    // Near-neutral but interesting: a high line that SHOULD leak, held together
+    // by recovery pace (the Nuno-Mendes / Akanji effect).
+    if (def.line >= 6.5 && att.pace >= 7)
+      return `${defName}'s recovery pace (${def.defSpeed}) covers the space behind its high line, neutralizing ${attName}`;
+    return null;
+  };
+  const notes = [describe(nameA, tA, nameB, tB), describe(nameB, tB, nameA, tA)].filter(Boolean);
+  return {
+    aMul: paceLineMul(nameA, nameB),
+    bMul: paceLineMul(nameB, nameA),
+    note: notes.length ? notes.join(" · ") : "Neither attack gets clean space in behind — pace is a non-factor here.",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +313,7 @@ function poissonP(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) 
 // both ends. Negative rho shifts mass back onto the draws. Value chosen by
 // sweeping against our R32 backtest + de-vigged market lines (fixed our
 // persistent ~5-point draw-probability shortfall vs the books at no cost).
-const DIXON_COLES_RHO = -0.15;
+const DIXON_COLES_RHO = -0.08; // reduced from -0.15: the old value over-added draws in lopsided QF matchups (market draw ~24% vs our 31%)
 
 function dixonColesTau(i, j, la, lb, rho) {
   if (i === 0 && j === 0) return 1 - la * lb * rho;
@@ -806,6 +834,7 @@ function predictMatch(nameA, nameB, opts = {}) {
     timingB: peakWindow(nameB, teamB.style),
     concedeA: peakConcedeWindow(nameA, teamA.style),
     concedeB: peakConcedeWindow(nameB, teamB.style),
+    paceLine: paceMatchupNote(nameA, nameB),
     clusterA: teamClustering(nameA),
     clusterB: teamClustering(nameB),
     timingSampleA: teamRealTiming(nameA).nS,

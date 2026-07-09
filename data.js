@@ -32,11 +32,11 @@ const TEAMS = {
     formNote: "Needed extra time to see off Cape Verde 3-2 in the round of 32 — a real scare after cruising the group stage, but Messi (now 7 goals) settled it late.",
     blurb: "Controls games through midfield discipline but happily drops deep and counters when ahead." },
   "France":                 { code: "fr", flag: "🇫🇷", strength: 91, momentum: 88, form: 93, style: "COUNTER",
-    formNote: "Mbappé shares the golden boot lead (6 goals) and France dismantled Sweden 3-0 in the round of 32.",
-    blurb: "Doesn't need to dominate the ball — wins it back and breaks at explosive pace through Mbappé and co. Lower possession than Spain, but ruthless in transition." },
+    formNote: "Into the quarterfinals with the tournament's most feared attack (attack factor 1.67 — elite; Mbappé leading the golden boot race) after a 3-0 Sweden win and a grittier 1-0 over Paraguay. BUT Tchouaméni is OUT (adductor tear) for the Morocco QF, thinning the midfield shield.",
+    blurb: "Doesn't need the ball — wins it back and breaks at pace through Mbappé/Olise. Ruthless in transition, but its speed can be smothered by a disciplined low block (see Morocco QF)." },
   "Spain":                  { code: "es", flag: "🇪🇸", strength: 90, momentum: 94, form: 92, style: "POSSESSION",
-    formNote: "Swept Austria aside 3-0 — arguably the most complete performance of the round of 32.",
-    blurb: "Modern tiki-taka heir: relentless short passing to suffocate opponents out of the game." },
+    formNote: "Into the quarterfinals having barely conceded all tournament (goals-against factor 0.53 — the best left) — a 1-0 win over Portugal sealed by Merino in the 90+1'. Without the injured Nico Williams, so more control than pace out wide.",
+    blurb: "Modern tiki-taka: relentless short passing to suffocate opponents. Elite defensively too — but a VERY high line with slow fullbacks (no Carvajal) can be exploited in behind by real pace." },
   "Brazil":                 { code: "br", flag: "🇧🇷", strength: 88, momentum: 82, form: 84, style: "POSSESSION", eliminated: true,
     eliminatedNote: "Out — beaten 2-1 by Norway in the round of 16 (Haaland scored twice in the final 11 minutes); Neymar's stoppage-time penalty was too little too late.",
     formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
@@ -242,21 +242,24 @@ const MOMENTUM_PEDIGREE = {
 // 2026 squad/XI data (July 6) — same rule as PLAYMAKERS: only players who
 // actually start this WC. Values are calibrated from those confirmed starters'
 // known pace; FIFA sprint-speed validation is a further refinement.
+// ── QUARTERFINALISTS: verified July 9 against actual R16 starting XIs (not
+//    predicted lineups). Each comment cites the real back line + attack. ──
 const TACTICAL = {
-  "France":      { pace: 10, line: 6, defSpeed: 8 }, // Mbappé/Olise fast; Koundé+Saliba+Upamecano genuinely quick behind
-  "Spain":       { pace: 6,  line: 8, defSpeed: 4 }, // Nico Williams OUT for the tournament (adductor, ~4wk, verified) → primary pace-in-behind gone; Yamal quick but a dribbler not a burner, Baena's a creator. VERY high line + slow FBs (no Carvajal, verified via ESPN squad) = still exploitable BY opponents
-  "England":     { pace: 7,  line: 5, defSpeed: 4 }, // ⚠ back line UNVERIFIED — my "Walker" and "Alexander-Arnold" were both wrong/unconfirmed; recheck actual RB+CBs via Sofascore/FBref WC2026 appearances, then set defSpeed (currently a provisional placeholder)
-  "Argentina":   { pace: 6,  line: 6, defSpeed: 3 }, // control over raw pace up top; Otamendi (38) + Tagliafico (aging) = slow back line
-  "Portugal":    { pace: 8,  line: 5, defSpeed: 7 }, // Leão/Conceição in transition; Nuno Mendes elite recovery pace at LB (blunts pacy wingers), sits deeper to counter
-  "Belgium":     { pace: 8,  line: 5, defSpeed: 5 }, // Doku burst; Castagne/De Cuyper/Theate moderate; mid-block counter
-  "Norway":      { pace: 7,  line: 7, defSpeed: 4 }, // Nusa + a deceptively-quick Haaland; but a high-ish line WITHOUT recovery pace — why France ran them 4-1
-  "Colombia":    { pace: 8,  line: 6, defSpeed: 5 }, // Luis Díaz elite pace, Muñoz quick RB; presses fairly high
-  "USA":         { pace: 7,  line: 6, defSpeed: 5 }, // Pulisic/Weah quick; Antonee Robinson fast at LB but Ream slow at CB; press high
-  "Morocco":     { pace: 7,  line: 3, defSpeed: 6 }, // Hakimi/Mazraoui/Ait-Nouri are quick fullbacks — but off a deep low block, so pace shows on the counter
-  "Switzerland": { pace: 6,  line: 5, defSpeed: 5 }, // Ndoye quick; Akanji fast CB but Rodríguez aging; organized mid line
-  "Mexico":      { pace: 6,  line: 6, defSpeed: 5 }, // Quiñones quick; back line moderate
-  "Egypt":       { pace: 7,  line: 3, defSpeed: 4 }, // Salah/Marmoush rapid on the break, but the team sits DEEP so it's counter-pace only
-  "Brazil":      { pace: 9,  line: 6, defSpeed: 5 }, // (eliminated by Norway) Vinícius pace; Marquinhos/Danilo moderate
+  "France":      { pace: 10, line: 6, defSpeed: 7 }, // XI: Koundé/Saliba/Upamecano (all quick) + Digne LB (aging, the one soft spot — NOT Théo). Mbappé pace up top
+  "Spain":       { pace: 6,  line: 8, defSpeed: 4 }, // Nico Williams OUT (adductor, done for the tournament) → pace-in-behind gone; Yamal a dribbler not a burner. XI back line Porro/Laporte/Cubarsí/Cucurella — no Carvajal, not quick → VERY high line exploitable BY opponents
+  "England":     { pace: 8,  line: 5, defSpeed: 6 }, // Quansah SUSPENDED (2-match ban, red card vs Mexico) for the Norway QF — his pace was part of the "genuinely quick" back line; expected replacement (Konsa shifting to RB / Stones or Burn at CB) is more experienced than rapid, so defSpeed nudged down from 7. Attack Saka + Gordon both rapid → higher pace still holds
+  "Argentina":   { pace: 6,  line: 6, defSpeed: 5 }, // CORRECTED: Otamendi BENCHED — actual CBs are Romero + Lisandro Martínez (both athletic); Molina/Tagliafico FBs. Not the slow line I'd assumed. Messi/Álvarez control over pace up top
+  "Belgium":     { pace: 8,  line: 5, defSpeed: 5 }, // rated on FIRST-CHOICE XI (Doku/DBK/Lukaku were rested vs USA): Doku's burst; Castagne/De Cuyper/Theate moderate; mid-block counter
+  "Norway":      { pace: 7,  line: 7, defSpeed: 4 }, // confirmed XI: Ajer/Heggem CBs + Pedersen/Møller Wolfe FBs — a high-ish line WITHOUT recovery pace (why France ran them 4-1). Nusa quick, Haaland power
+  "Morocco":     { pace: 6,  line: 3, defSpeed: 6 }, // XI: Hakimi + Mazraoui (quick FBs), Diop/Halhal CBs; front is CREATIVE (Brahim/Ounahi/El Khannouss) not out-and-out pacy — off a deep low block
+  "Switzerland": { pace: 6,  line: 5, defSpeed: 5 }, // confirmed XI: Akanji (fast CB) + Elvedi, Zakaria at RB, Rodríguez LB (aging); Ndoye quick up top; organized mid line
+  // ── eliminated (kept for reference; no longer predicted) ──
+  "Portugal":    { pace: 8,  line: 5, defSpeed: 7 }, // out (lost 0-1 Spain)
+  "Colombia":    { pace: 8,  line: 6, defSpeed: 5 }, // out (pens vs Switzerland)
+  "USA":         { pace: 7,  line: 6, defSpeed: 5 }, // out (4-1 Belgium)
+  "Mexico":      { pace: 6,  line: 6, defSpeed: 5 }, // out (2-3 England)
+  "Egypt":       { pace: 7,  line: 3, defSpeed: 4 }, // out (2-3 Argentina)
+  "Brazil":      { pace: 9,  line: 6, defSpeed: 5 }, // out (1-2 Norway)
 };
 
 // How much an opponent's defensive approach blunts or enables creative
@@ -309,9 +312,14 @@ const RESULTS = [
 // covers all of these. venueCountry powers the home-advantage bump for the
 // three host nations.
 const FIXTURES = [
-  { round: "Quarterfinal", date: "Jul 9", venue: "Boston",      venueCountry: "US", a: "Morocco",     b: "France" },
-  { round: "Quarterfinal", date: "Jul 10", venue: "Los Angeles", venueCountry: "US", a: "Spain",       b: "Belgium" },
-  { round: "Quarterfinal", date: "Jul 11", venue: "Miami Gardens", venueCountry: "US", a: "Norway",   b: "England" },
+  { round: "Quarterfinal", date: "Jul 9", venue: "Boston",      venueCountry: "US", a: "Morocco",     b: "France",
+    marketScores: [{ a: 0, b: 1, pct: 16 }, { a: 0, b: 2 }], // bookmakers: France 1-0 shortest odds (16%), then France 2-0
+    insight: "Both sides are missing a piece of their midfield engine. Morocco winger Ismael Saibari (hamstring, picked up in the round of 16 win over Canada) is confirmed out, thinning an already conservative attack further. France's Aurélien Tchouaméni (adductor) is a major doubt too — he returned to training July 8 but Deschamps hasn't confirmed a start, so Manu Koné may deputise, leaving less defensive cover in front of a back line already without Théo Hernandez-level pace at left-back." },
+  { round: "Quarterfinal", date: "Jul 10", venue: "Los Angeles", venueCountry: "US", a: "Spain",       b: "Belgium",
+    marketScores: [{ a: 1, b: 0 }, { a: 2, b: 0 }], // bookmakers: Spain 1-0 shortest, then Spain 2-0 (Spain hasn't conceded all tournament)
+    insight: "Belgium loses a starter for the rest of the tournament: Amadou Onana tore his ACL during the round of 16 win over the USA and is out. He wasn't a top-3 creative player, but he was the midfield's defensive screen — without him, Spain's front three (Yamal/Pedri/Olmo) should find even more room to combine centrally against an already-stretched Belgian block." },
+  { round: "Quarterfinal", date: "Jul 11", venue: "Miami Gardens", venueCountry: "US", a: "Norway",   b: "England",
+    insight: "England will be without Jarell Quansah for this one — FIFA handed him a two-match ban (covering the semifinal too, if England get there) for his red card against Mexico. He was part of a back line specifically noted as young and genuinely quick; the expected reshuffle (Konsa into a back-line role, Stones or Burn partnering Guéhi) trades some of that recovery pace for size and experience, which matters against a Norway side built to spring Haaland in behind." },
   { round: "Quarterfinal", date: "Jul 11", venue: "Kansas City", venueCountry: "US", a: "Argentina",   b: "Switzerland" },
 ];
 

@@ -15,20 +15,57 @@ function teamLabel(name) {
   return TEAMS[name] ? `${flagImg(name)} ${name}` : name;
 }
 
+// League scoring by round (exact scoreline / correct winner only).
+function roundPoints(round) {
+  if (round === "Final") return { exact: 15, winner: 8 };
+  if (round === "Semifinal") return { exact: 12, winner: 6 };
+  if (round === "Quarterfinal") return { exact: 8, winner: 4 };
+  return { exact: 5, winner: 2 }; // group, Round of 32, Round of 16
+}
+
+// Grade our OUT-OF-SAMPLE pick (mode:"group" uses only group-stage data, so it
+// never peeks at the knockout result it's being scored against).
+function gradePrediction(r) {
+  const p = predictMatch(r.a, r.b, { mode: "group" });
+  if (!p) return null;
+  const outc = (a, b) => a > b ? "A" : (a < b ? "B" : "D");
+  const exact = p.scoreA === r.scoreA && p.scoreB === r.scoreB;
+  const winnerRight = outc(p.scoreA, p.scoreB) === outc(r.scoreA, r.scoreB);
+  const tbl = roundPoints(r.round);
+  const points = exact ? tbl.exact : (winnerRight ? tbl.winner : 0);
+  return { predA: p.scoreA, predB: p.scoreB, points, cat: exact ? "exact" : (winnerRight ? "winner" : "miss") };
+}
+
 function renderResults() {
+  let totalPts = 0, graded = 0, maxPts = 0;
   const rows = RESULTS.map(r => {
     const pending = r.scoreA === null;
     const scoreText = pending ? "vs" : `${r.scoreA} – ${r.scoreB}`;
+    let predLine = "";
+    if (!pending) {
+      const g = gradePrediction(r);
+      if (g) {
+        totalPts += g.points; graded++; maxPts += roundPoints(r.round).exact;
+        const catLabel = g.cat === "exact" ? "✓ exact score" : g.cat === "winner" ? "✓ right winner" : "✗ miss";
+        predLine = `<div class="pred-line pred-${g.cat}">Our pick <strong>${g.predA}–${g.predB}</strong> · <span class="pred-pts">${g.points} pt${g.points === 1 ? "" : "s"}</span> <span class="pred-cat">${catLabel}</span></div>`;
+      }
+    }
     return `
-      <div class="match-row ${pending ? "pending" : ""}">
-        <span class="match-date">${r.date}</span>
-        <span class="match-team home">${teamLabel(r.a)}</span>
-        <span class="match-score">${scoreText}</span>
-        <span class="match-team away">${teamLabel(r.b)}</span>
-        <span class="match-note">${r.note}</span>
+      <div class="match-block">
+        <div class="match-row ${pending ? "pending" : ""}">
+          <span class="match-date">${r.date}</span>
+          <span class="match-team home">${teamLabel(r.a)}</span>
+          <span class="match-score">${scoreText}</span>
+          <span class="match-team away">${teamLabel(r.b)}</span>
+          <span class="match-note">${r.note}</span>
+        </div>
+        ${predLine}
       </div>`;
   }).join("");
-  document.getElementById("results-table").innerHTML = rows;
+  const summary = graded
+    ? `<div class="pred-summary-bar">Model scorecard: <strong>${totalPts} pts</strong> over ${graded} games <span class="pred-summary-sub">(out-of-sample picks vs actual — max ${maxPts})</span></div>`
+    : "";
+  document.getElementById("results-table").innerHTML = summary + rows;
 }
 
 function renderFixtures() {
@@ -137,11 +174,19 @@ function renderPredictions() {
 
     const statsHtml = STAT_META.map(meta => statRow(meta, p.statsA[meta.key], p.statsB[meta.key])).join("");
 
-    const oddsHtml = p.topScores.map(s => `
+    // Correct-score chips: prefer the real bookmaker market (shortest-odds
+    // scorelines) when we have it for this fixture; otherwise fall back to the
+    // model's own Poisson top-3. Market entries may omit a % (odds only).
+    const useMarket = Array.isArray(f.marketScores) && f.marketScores.length > 0;
+    const scoreChips = useMarket
+      ? f.marketScores.map(s => ({ a: s.a, b: s.b, prob: s.pct != null ? s.pct / 100 : null }))
+      : p.topScores.map(s => ({ a: s.a, b: s.b, prob: s.prob }));
+    const oddsHtml = scoreChips.map(s => `
       <div class="odds-chip">
         <span class="odds-score">${s.a}-${s.b}</span>
-        <span class="odds-pct">${(s.prob * 100).toFixed(1)}%</span>
+        ${s.prob != null ? `<span class="odds-pct">${(s.prob * 100).toFixed(1)}%</span>` : ""}
       </div>`).join("");
+    const oddsSub = useMarket ? "bookmakers' shortest-odds scorelines" : "model estimate";
 
     const scenarioHtml = p.scenarios.map(s => `
       <div class="scenario">
@@ -198,6 +243,7 @@ function renderPredictions() {
           <p class="timing-profile">Goal timing: <strong>${f.a}</strong> scores most in ${p.timingA.label} (${p.timingA.pct}%), concedes most in ${p.concedeA.label} (${p.concedeA.pct}%) · <strong>${f.b}</strong> scores in ${p.timingB.label} (${p.timingB.pct}%), concedes in ${p.concedeB.label} (${p.concedeB.pct}%)
           ${(p.timingSampleA + p.timingSampleB) === 0 ? '<span class="timing-src">— style estimates; real goal-minute data fills in as games are recorded</span>' : `<span class="timing-src">— based on ${p.timingSampleA + p.timingSampleB} recorded goal-minutes + style priors</span>`}</p>
           ${[[f.a, p.clusterA], [f.b, p.clusterB]].filter(([, c]) => c && c.bursty).map(([name, c]) => `<p class="burst-note">⚡ <strong>${name}</strong> scores in bursts — ${c.clustered} of ${c.eligible} follow-up goals came within 10' of a previous one. Once they score, expect another soon.</p>`).join("")}
+          <p class="pace-line-profile"><span class="pl-label">Pace vs line</span> ${p.paceLine.note} <span class="pl-nums">(${f.a} ×${p.paceLine.aMul.toFixed(2)}, ${f.b} ×${p.paceLine.bMul.toFixed(2)})</span></p>
           <div class="scenario-list">${scenarioHtml}</div>
           <h4>Tournament Form <span class="h4-sub">strength · momentum (current era) · this tournament</span></h4>
           <div class="form-compare">
@@ -213,7 +259,7 @@ function renderPredictions() {
           </div>` : ""}
           <h4>Head-to-Head Stats</h4>
           <div class="stat-table">${statsHtml}</div>
-          <h4>Most Likely Correct Scores</h4>
+          <h4>Most Likely Correct Scores <span class="h4-sub">${oddsSub}</span></h4>
           <div class="odds-row">${oddsHtml}</div>
         </div>
         </div>
