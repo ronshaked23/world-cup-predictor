@@ -133,6 +133,16 @@ h2:first-child { margin-top: 0; }
   flex-wrap: wrap;
 }
 .pred-line strong { color: var(--ink); }
+.pred-tag {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.pred-tag-live { background: #0e3b22; color: #4ade80; }
+.pred-tag-recon { background: #2a2a2a; color: #8a8a8a; cursor: help; }
 .pred-pts { font-weight: 800; }
 .pred-cat { font-size: 0.68rem; }
 .pred-exact  { border-left: 3px solid var(--green); }

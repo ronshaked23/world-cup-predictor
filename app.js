@@ -23,21 +23,30 @@ function roundPoints(round) {
   return { exact: 5, winner: 2 }; // group, Round of 32, Round of 16
 }
 
-// Grade our OUT-OF-SAMPLE pick (mode:"group" uses only group-stage data, so it
-// never peeks at the knockout result it's being scored against).
+// Grade our prediction for a completed game. If a genuine LIVE pre-game pick
+// was stored (r.pred, captured before kickoff), use that — it's what we
+// actually predicted. Otherwise fall back to recomputing with today's model in
+// OUT-OF-SAMPLE mode (group-stage data only) and flag it as a reconstruction,
+// since the model has since evolved and this may differ from our live call.
 function gradePrediction(r) {
-  const p = predictMatch(r.a, r.b, { mode: "group" });
-  if (!p) return null;
+  let predA, predB, live;
+  if (Array.isArray(r.pred)) {
+    [predA, predB] = r.pred; live = true;
+  } else {
+    const p = predictMatch(r.a, r.b, { mode: "group" });
+    if (!p) return null;
+    predA = p.scoreA; predB = p.scoreB; live = false;
+  }
   const outc = (a, b) => a > b ? "A" : (a < b ? "B" : "D");
-  const exact = p.scoreA === r.scoreA && p.scoreB === r.scoreB;
-  const winnerRight = outc(p.scoreA, p.scoreB) === outc(r.scoreA, r.scoreB);
+  const exact = predA === r.scoreA && predB === r.scoreB;
+  const winnerRight = outc(predA, predB) === outc(r.scoreA, r.scoreB);
   const tbl = roundPoints(r.round);
   const points = exact ? tbl.exact : (winnerRight ? tbl.winner : 0);
-  return { predA: p.scoreA, predB: p.scoreB, points, cat: exact ? "exact" : (winnerRight ? "winner" : "miss") };
+  return { predA, predB, points, cat: exact ? "exact" : (winnerRight ? "winner" : "miss"), live };
 }
 
 function renderResults() {
-  let totalPts = 0, graded = 0, maxPts = 0;
+  let totalPts = 0, graded = 0, maxPts = 0, liveCount = 0;
   const rows = RESULTS.map(r => {
     const pending = r.scoreA === null;
     const scoreText = pending ? "vs" : `${r.scoreA} – ${r.scoreB}`;
@@ -45,9 +54,12 @@ function renderResults() {
     if (!pending) {
       const g = gradePrediction(r);
       if (g) {
-        totalPts += g.points; graded++; maxPts += roundPoints(r.round).exact;
+        totalPts += g.points; graded++; maxPts += roundPoints(r.round).exact; if (g.live) liveCount++;
         const catLabel = g.cat === "exact" ? "✓ exact score" : g.cat === "winner" ? "✓ right winner" : "✗ miss";
-        predLine = `<div class="pred-line pred-${g.cat}">Our pick <strong>${g.predA}–${g.predB}</strong> · <span class="pred-pts">${g.points} pt${g.points === 1 ? "" : "s"}</span> <span class="pred-cat">${catLabel}</span></div>`;
+        const tag = g.live
+          ? `<span class="pred-tag pred-tag-live">live pick</span>`
+          : `<span class="pred-tag pred-tag-recon" title="Recomputed with today's model (out-of-sample) — the model has evolved since this game, so it may differ from what we predicted live.">recomputed</span>`;
+        predLine = `<div class="pred-line pred-${g.cat}">Our pick <strong>${g.predA}–${g.predB}</strong> ${tag} · <span class="pred-pts">${g.points} pt${g.points === 1 ? "" : "s"}</span> <span class="pred-cat">${catLabel}</span></div>`;
       }
     }
     return `
@@ -62,8 +74,13 @@ function renderResults() {
         ${predLine}
       </div>`;
   }).join("");
+  const mix = liveCount === graded
+    ? `${graded} live picks`
+    : liveCount === 0
+      ? `all recomputed out-of-sample — live storage begins with the quarterfinals`
+      : `${liveCount} live · ${graded - liveCount} recomputed`;
   const summary = graded
-    ? `<div class="pred-summary-bar">Model scorecard: <strong>${totalPts} pts</strong> over ${graded} games <span class="pred-summary-sub">(out-of-sample picks vs actual — max ${maxPts})</span></div>`
+    ? `<div class="pred-summary-bar">Model scorecard: <strong>${totalPts} pts</strong> over ${graded} games <span class="pred-summary-sub">(${mix} — max ${maxPts})</span></div>`
     : "";
   document.getElementById("results-table").innerHTML = summary + rows;
 }

@@ -29,8 +29,8 @@ const STYLES = {
 //   The prediction model blends strength (40%) + momentum (35%) + form (25%).
 const TEAMS = {
   "Argentina":              { code: "ar", flag: "🇦🇷", strength: 92, momentum: 90, form: 93, style: "BALANCED",
-    formNote: "Needed extra time to see off Cape Verde 3-2 in the round of 32 — a real scare after cruising the group stage, but Messi (now 7 goals) settled it late.",
-    blurb: "Controls games through midfield discipline but happily drops deep and counters when ahead." },
+    formNote: "Into the quarterfinals, but the hard way — both knockout wins (3-2 Cape Verde aet, 3-2 Egypt) needed late goals after nervy finishes. Messi (7 goals) is carrying them. Otamendi is benched; Romero + Lisandro Martínez are the athletic CB pairing now.",
+    blurb: "Controls games through midfield discipline, then drops deep and counters when ahead — happy to win ugly, as the two 3-2 knockout escapes show." },
   "France":                 { code: "fr", flag: "🇫🇷", strength: 91, momentum: 88, form: 93, style: "COUNTER",
     formNote: "Into the quarterfinals with the tournament's most feared attack (attack factor 1.67 — elite; Mbappé leading the golden boot race) after a 3-0 Sweden win and a grittier 1-0 over Paraguay. BUT Tchouaméni is OUT (adductor tear) for the Morocco QF, thinning the midfield shield.",
     blurb: "Doesn't need the ball — wins it back and breaks at pace through Mbappé/Olise. Ruthless in transition, but its speed can be smothered by a disciplined low block (see Morocco QF)." },
@@ -42,8 +42,8 @@ const TEAMS = {
     formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
     blurb: "Technical, flair-driven possession built around quick combinations in tight spaces." },
   "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED",
-    formNote: "Edged DR Congo 2-1 — not pretty, but this side has barely lost a competitive match under its current manager in nearly two years.",
-    blurb: "Patient build-up with license to go direct through pacey wide forwards." },
+    formNote: "Into the quarterfinals after a 3-2 slugfest with Mexico — the young, genuinely quick back line (Quansah/Konsa/Guéhi/O'Reilly) is fast but leaky. Quansah is SUSPENDED for the Norway QF (red-card ban), forcing a reshuffle that trades pace for size.",
+    blurb: "Patient build-up with license to go direct through pacey wide forwards (Saka, Gordon); athletic in defence but not always solid." },
   "Portugal":               { code: "pt", flag: "🇵🇹", strength: 86, momentum: 88, form: 88, style: "COUNTER", eliminated: true,
     eliminatedNote: "Out — beaten 1-0 by Spain in the round of 16, Mikel Merino scoring an injury-time winner in the 90+1'. Cristiano Ronaldo's final World Cup ends without a trophy.",
     formNote: "Beat Croatia 2-1 — the standout head-to-head result of the round of 32.",
@@ -54,9 +54,10 @@ const TEAMS = {
   "Germany":                { code: "de", flag: "🇩🇪", strength: 83, momentum: 76, form: 74, style: "PRESS", eliminated: true,
     formNote: "Out — drew 1-1 with Paraguay and lost the shootout 4-3 in the round of 32.",
     blurb: "Coordinated high press aiming to win the ball in the opponent's third." },
-  "Belgium":                { code: "be", flag: "🇧🇪", strength: 82, momentum: 78, form: 79, style: "COUNTER",
-    formNote: "Survived a 3-2 extra-time thriller against Senegal — dangerous going forward, leaky at the back.",
-    blurb: "Sits in a mid-block and springs quick vertical counters through creative midfielders." },
+  "Belgium":                { code: "be", flag: "🇧🇪", strength: 82, momentum: 78, form: 79, style: "COUNTER", eliminated: true,
+    eliminatedNote: "Out — beaten 2-1 by Spain in the quarterfinal; De Ketelaere's equalizer wasn't enough after Fabián Ruiz's opener and Mikel Merino's 88th-minute winner. Courtois went off injured (quad) in the 71st.",
+    formNote: "Into the quarterfinals in style — a 4-1 dismantling of the USA with Doku and De Bruyne pulling strings. But Onana tore his ACL in that game and is OUT for the tournament, stripping the midfield of its defensive screen ahead of Spain.",
+    blurb: "Sits in a mid-block and springs quick vertical counters through Doku's pace and De Bruyne's passing — dangerous going forward, stretched at the back without Onana." },
   "Croatia":                { code: "hr", flag: "🇭🇷", strength: 82, momentum: 79, form: 78, style: "POSSESSION", eliminated: true,
     formNote: "Out — competitive to the end but beaten 2-1 by Portugal.",
     blurb: "Wins the midfield battle first, controls tempo, patient in the final third." },
@@ -68,9 +69,10 @@ const TEAMS = {
     eliminatedNote: "Out — held Switzerland 0-0 through 120 minutes in the round of 16 before losing 4-3 on penalties (Sánchez off the woodwork).",
     formNote: "Beat Ghana 1-0 in the round of 32, dominating on the ball (61% possession, 2.06 xG) despite the tight scoreline — sets up a last-16 date with Switzerland.",
     blurb: "High-tempo pressing combined with individual flair in tight areas." },
-  "Morocco":                { code: "ma", flag: "🇲🇦", strength: 80, momentum: 83, form: 87, style: "PARK_BUS",
-    formNote: "Knocked out the Netherlands on penalties after a 1-1 draw — the defense has barely been breached all tournament, continuing its run since the 2022 semifinal.",
-    blurb: "Elite defensive shape and discipline — happy to absorb pressure and strike once." },
+  "Morocco":                { code: "ma", flag: "🇲🇦", strength: 80, momentum: 83, form: 87, style: "PARK_BUS", eliminated: true,
+    eliminatedNote: "Out — beaten 2-0 by France in the quarterfinal (Mbappé 60' after missing a first-half penalty, Dembélé 66'); the last African nation eliminated from the tournament.",
+    formNote: "Into the quarterfinals having barely been breached all tournament (defence factor 0.53) — a statement 3-0 over co-host Canada. Winger Saibari is OUT (hamstring) for the France QF, thinning an already conservative attack.",
+    blurb: "Elite low-block discipline — absorbs pressure and strikes on the counter through Hakimi/Mazraoui's fullback speed. Denies pacy attacks the space they want (a real headache for France)." },
   "Japan":                  { code: "jp", flag: "🇯🇵", strength: 79, momentum: 81, form: 80, style: "POSSESSION", eliminated: true,
     formNote: "Out — but pushed Brazil all the way in a 2-1 defeat after a strong group stage.",
     blurb: "Disciplined pressing triggers paired with quick, tidy possession football." },
@@ -82,8 +84,8 @@ const TEAMS = {
     formNote: "Out — went toe-to-toe with Belgium in a 3-2 extra-time classic.",
     blurb: "Athletic and direct — breaks quickly through pace on the flanks." },
   "Switzerland":            { code: "ch", flag: "🇨🇭", strength: 78, momentum: 80, form: 82, style: "BALANCED",
-    formNote: "Tidy 2-0 win over Algeria — still hasn't had to chase a game this tournament.",
-    blurb: "Extremely well organized, rarely beaten twice, efficient rather than flashy." },
+    formNote: "Into the quarterfinals the hard way — a 0-0 grind past Colombia settled on penalties. Well-drilled and hard to beat; notably scores in BURSTS (its four goals vs Bosnia came in a 16-minute flurry). Akanji anchors a solid, organized block.",
+    blurb: "Extremely well organized and efficient rather than flashy — rarely beaten twice in a game, and dangerous in short scoring flurries once it gets going." },
   "Mexico":                 { code: "mx", flag: "🇲🇽", strength: 77, momentum: 74, form: 84, style: "POSSESSION", eliminated: true,
     eliminatedNote: "Out — beaten 3-2 by England in the round of 16 at the Azteca, despite Quiñones and a Jiménez penalty pulling it back to 3-2; a red card to England's Quansah (54') wasn't enough to turn the tie. First-ever quarterfinal bid ends in the round of 16.",
     formNote: "Comfortable 2-0 over Ecuador at the Azteca, but that's against modest group opposition — this squad's underlying record over the last two years is solid CONCACAF-tier, not knockout-of-England tier — and it showed in a 3-2 round of 16 exit to England.",
@@ -95,8 +97,8 @@ const TEAMS = {
     formNote: "Out — led Norway 1-0 before conceding twice in a 2-1 defeat.",
     blurb: "Powerful and direct, wins physical duels and attacks crosses aggressively." },
   "Norway":                 { code: "no", flag: "🇳🇴", strength: 81, momentum: 79, form: 84, style: "DIRECT",
-    formNote: "Came from behind to beat Ivory Coast 2-1 — and the betting markets rate this Haaland-led side as near-even money against Brazil.",
-    blurb: "Built to get the ball to its target forward quickly and attack the box in numbers." },
+    formNote: "The story of the round — Haaland scored twice in the final 11 minutes to stun Brazil 2-1 and reach the quarterfinals. Direct and lethal late, but plays a high-ish line WITHOUT recovery pace behind it (France exposed exactly that, 4-1, in the group).",
+    blurb: "Gets the ball to Haaland fast and attacks the box in numbers — deadly in the closing stages, but the high line is vulnerable to pace in behind." },
   "Sweden":                 { code: "se", flag: "🇸🇪", strength: 76, momentum: 73, form: 68, style: "DIRECT", eliminated: true,
     formNote: "Out — swept aside 3-0 by France after a mixed group stage.",
     blurb: "Physical, set-piece dangerous, prefers a direct route over intricate build-up." },
@@ -292,35 +294,34 @@ const RESULTS = [
   { round: "Round of 32", date: "Jul 2",  a: "Portugal", b: "Croatia", scoreA: 2, scoreB: 1, note: "" },
   { round: "Round of 32", date: "Jul 2",  a: "Switzerland", b: "Algeria", scoreA: 2, scoreB: 0, note: "" },
   { round: "Round of 32", date: "Jul 3",  a: "Egypt", b: "Australia", scoreA: 1, scoreB: 1, note: "aet — Egypt won 4-2 on penalties" },
-  { round: "Round of 32", date: "Jul 3", a: "Argentina", b: "Cape Verde", scoreA: 3, scoreB: 2, note: "aet — Cape Verde took the defending champions to the wire" },
+  { round: "Round of 32", date: "Jul 3", a: "Argentina", b: "Cape Verde", scoreA: 3, scoreB: 2, pred: [2, 0], note: "aet — Cape Verde took the defending champions to the wire" }, // live pick was 2-0 Argentina
   // goalsA/goalsB (optional) = minute of each goal, for team-specific goal-timing.
   // Normalize stoppage/ET to the base minute (45+2 -> 45, 90+3 -> 90). The daily
   // updater fills these in as it records games; older games get backfilled when
   // web access is available. Colombia-Ghana seeded (Arias 14').
-  { round: "Round of 32", date: "Jul 3", a: "Colombia", b: "Ghana", scoreA: 1, scoreB: 0, note: "", goalsA: [14], goalsB: [] },
-  { round: "Round of 16", date: "Jul 4", a: "Canada", b: "Morocco", scoreA: 0, scoreB: 3, note: "" },
-  { round: "Round of 16", date: "Jul 4", a: "Paraguay", b: "France", scoreA: 0, scoreB: 1, note: "" },
-  { round: "Round of 16", date: "Jul 5", a: "Brazil", b: "Norway", scoreA: 1, scoreB: 2, note: "", goalsA: [90], goalsB: [79, 90] },
-  { round: "Round of 16", date: "Jul 5", a: "Mexico", b: "England", scoreA: 2, scoreB: 3, note: "", goalsA: [42, 69], goalsB: [36, 38, 60] },
-  { round: "Round of 16", date: "Jul 6", a: "Portugal", b: "Spain", scoreA: 0, scoreB: 1, note: "", goalsA: [], goalsB: [90] },
-  { round: "Round of 16", date: "Jul 6", a: "USA", b: "Belgium", scoreA: 1, scoreB: 4, note: "", goalsA: [31], goalsB: [9, 33, 57, 90] },
-  { round: "Round of 16", date: "Jul 7", a: "Argentina", b: "Egypt", scoreA: 3, scoreB: 2, note: "", goalsA: [79, 83, 90], goalsB: [15, 67] },
-  { round: "Round of 16", date: "Jul 7", a: "Switzerland", b: "Colombia", scoreA: 0, scoreB: 0, note: "aet — Switzerland won 4-3 on penalties", goalsA: [], goalsB: [] },
+  { round: "Round of 32", date: "Jul 3", a: "Colombia", b: "Ghana", scoreA: 1, scoreB: 0, pred: [1, 0], note: "", goalsA: [14], goalsB: [] }, // live pick was 1-0 Colombia — exact
+  { round: "Round of 16", date: "Jul 4", a: "Canada", b: "Morocco", scoreA: 0, scoreB: 3, pred: [0, 1], note: "" }, // live pick was 0-1 Morocco (winner, not the recomputed exact)
+  { round: "Round of 16", date: "Jul 4", a: "Paraguay", b: "France", scoreA: 0, scoreB: 1, pred: [0, 3], note: "" }, // live pick 0-3 France (winner)
+  { round: "Round of 16", date: "Jul 5", a: "Brazil", b: "Norway", scoreA: 1, scoreB: 2, pred: [2, 1], note: "", goalsA: [90], goalsB: [79, 90] }, // live pick 2-1 Brazil — the miss (Norway upset)
+  { round: "Round of 16", date: "Jul 5", a: "Mexico", b: "England", scoreA: 2, scoreB: 3, pred: [1, 2], note: "", goalsA: [42, 69], goalsB: [36, 38, 60] }, // live pick 1-2 England (winner)
+  { round: "Round of 16", date: "Jul 6", a: "Portugal", b: "Spain", scoreA: 0, scoreB: 1, pred: [1, 2], note: "", goalsA: [], goalsB: [90] }, // live pick 2-1 Spain (winner)
+  { round: "Round of 16", date: "Jul 6", a: "USA", b: "Belgium", scoreA: 1, scoreB: 4, pred: [1, 2], note: "", goalsA: [31], goalsB: [9, 33, 57, 90] }, // live pick 1-2 Belgium (winner)
+  { round: "Round of 16", date: "Jul 7", a: "Argentina", b: "Egypt", scoreA: 3, scoreB: 2, pred: [2, 0], note: "", goalsA: [79, 83, 90], goalsB: [15, 67] }, // live pick 2-0 Argentina (winner)
+  { round: "Round of 16", date: "Jul 7", a: "Switzerland", b: "Colombia", scoreA: 0, scoreB: 0, pred: [1, 2], note: "aet — Switzerland won 4-3 on penalties", goalsA: [], goalsB: [] }, // live pick 1-2 Colombia — miss (0-0 draw at 120')
+  { round: "Quarterfinal", date: "Jul 9", a: "Morocco", b: "France", scoreA: 0, scoreB: 2, pred: [0, 2], note: "Mbappé missed a first-half penalty (28') but made amends on the hour mark; Dembélé added a second in the 66th.", goalsA: [], goalsB: [60, 66] }, // live pick 0-2 France — exact
+  { round: "Quarterfinal", date: "Jul 10", a: "Spain", b: "Belgium", scoreA: 2, scoreB: 1, pred: [2, 1], note: "Fabián Ruiz opened the scoring, De Ketelaere equalized, Merino won it with a late rebound just seconds after coming off the bench.", goalsA: [30, 88], goalsB: [41] }, // live pick 2-1 Spain — exact
 ];
 
 // Upcoming fixtures — everything still to be played. The Predictions tab
 // covers all of these. venueCountry powers the home-advantage bump for the
 // three host nations.
 const FIXTURES = [
-  { round: "Quarterfinal", date: "Jul 9", venue: "Boston",      venueCountry: "US", a: "Morocco",     b: "France",
-    marketScores: [{ a: 0, b: 1, pct: 16 }, { a: 0, b: 2 }], // bookmakers: France 1-0 shortest odds (16%), then France 2-0
-    insight: "Both sides are missing a piece of their midfield engine. Morocco winger Ismael Saibari (hamstring, picked up in the round of 16 win over Canada) is confirmed out, thinning an already conservative attack further. France's Aurélien Tchouaméni (adductor) is a major doubt too — he returned to training July 8 but Deschamps hasn't confirmed a start, so Manu Koné may deputise, leaving less defensive cover in front of a back line already without Théo Hernandez-level pace at left-back." },
-  { round: "Quarterfinal", date: "Jul 10", venue: "Los Angeles", venueCountry: "US", a: "Spain",       b: "Belgium",
-    marketScores: [{ a: 1, b: 0 }, { a: 2, b: 0 }], // bookmakers: Spain 1-0 shortest, then Spain 2-0 (Spain hasn't conceded all tournament)
-    insight: "Belgium loses a starter for the rest of the tournament: Amadou Onana tore his ACL during the round of 16 win over the USA and is out. He wasn't a top-3 creative player, but he was the midfield's defensive screen — without him, Spain's front three (Yamal/Pedri/Olmo) should find even more room to combine centrally against an already-stretched Belgian block." },
   { round: "Quarterfinal", date: "Jul 11", venue: "Miami Gardens", venueCountry: "US", a: "Norway",   b: "England",
+    pred: [1, 2], // LIVE pre-game prediction, captured Jul 9 (1-2 England, 28/22/50)
     insight: "England will be without Jarell Quansah for this one — FIFA handed him a two-match ban (covering the semifinal too, if England get there) for his red card against Mexico. He was part of a back line specifically noted as young and genuinely quick; the expected reshuffle (Konsa into a back-line role, Stones or Burn partnering Guéhi) trades some of that recovery pace for size and experience, which matters against a Norway side built to spring Haaland in behind." },
-  { round: "Quarterfinal", date: "Jul 11", venue: "Kansas City", venueCountry: "US", a: "Argentina",   b: "Switzerland" },
+  { round: "Quarterfinal", date: "Jul 11", venue: "Kansas City", venueCountry: "US", a: "Argentina",   b: "Switzerland", pred: [2, 1] }, // LIVE pre-game prediction, captured Jul 9 (2-1 Argentina, 53/24/22)
+  { round: "Semifinal", date: "Jul 14", venue: "Dallas Stadium (Arlington)", venueCountry: "US", a: "France", b: "Spain",
+    pred: [2, 1] }, // LIVE pre-game prediction, captured Jul 11 (2-1 France, 45/25/30)
 ];
 
 // ---------------------------------------------------------------------------
