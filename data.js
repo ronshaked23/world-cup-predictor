@@ -42,8 +42,8 @@ const TEAMS = {
     formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
     blurb: "Technical, flair-driven possession built around quick combinations in tight spaces." },
   "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED",
-    formNote: "Into the quarterfinals after a 3-2 slugfest with Mexico — the young, genuinely quick back line (Quansah/Konsa/Guéhi/O'Reilly) is fast but leaky. Quansah is SUSPENDED for the Norway QF (red-card ban), forcing a reshuffle that trades pace for size.",
-    blurb: "Patient build-up with license to go direct through pacey wide forwards (Saka, Gordon); athletic in defence but not always solid." },
+    formNote: "Into the quarterfinals after a 3-2 slugfest with Mexico. Quansah is suspended for the Norway QF, but the CONFIRMED XI keeps the quick back line — Djed Spence comes in at RB, Konsa/Guéhi/O'Reilly stay, Stones benched — so no trade of pace for size. Guéhi passed a late hamstring test; Saka drops out for the equally-pacy Madueke.",
+    blurb: "Patient build-up with license to go direct through pacey wide forwards (Gordon, Madueke); a young, athletic back four — quick, but can be leaky." },
   "Portugal":               { code: "pt", flag: "🇵🇹", strength: 86, momentum: 88, form: 88, style: "COUNTER", eliminated: true,
     eliminatedNote: "Out — beaten 1-0 by Spain in the round of 16, Mikel Merino scoring an injury-time winner in the 90+1'. Cristiano Ronaldo's final World Cup ends without a trophy.",
     formNote: "Beat Croatia 2-1 — the standout head-to-head result of the round of 32.",
@@ -83,7 +83,8 @@ const TEAMS = {
   "Senegal":                { code: "sn", flag: "🇸🇳", strength: 78, momentum: 76, form: 77, style: "COUNTER", eliminated: true,
     formNote: "Out — went toe-to-toe with Belgium in a 3-2 extra-time classic.",
     blurb: "Athletic and direct — breaks quickly through pace on the flanks." },
-  "Switzerland":            { code: "ch", flag: "🇨🇭", strength: 78, momentum: 80, form: 82, style: "BALANCED",
+  "Switzerland":            { code: "ch", flag: "🇨🇭", strength: 78, momentum: 80, form: 82, style: "BALANCED", eliminated: true,
+    eliminatedNote: "Out — beaten 3-1 by Argentina after extra time in the quarterfinal; Ndoye's equalizer and a 10-man rally (Embolo sent off for a second yellow) weren't enough once Álvarez's 112th-minute curler and a late Lautaro Martínez goal put Argentina through.",
     formNote: "Into the quarterfinals the hard way — a 0-0 grind past Colombia settled on penalties. Well-drilled and hard to beat; notably scores in BURSTS (its four goals vs Bosnia came in a 16-minute flurry). Akanji anchors a solid, organized block.",
     blurb: "Extremely well organized and efficient rather than flashy — rarely beaten twice in a game, and dangerous in short scoring flurries once it gets going." },
   "Mexico":                 { code: "mx", flag: "🇲🇽", strength: 77, momentum: 74, form: 84, style: "POSSESSION", eliminated: true,
@@ -96,7 +97,8 @@ const TEAMS = {
   "Ivory Coast":            { code: "ci", flag: "🇨🇮", strength: 76, momentum: 76, form: 75, style: "DIRECT", eliminated: true,
     formNote: "Out — led Norway 1-0 before conceding twice in a 2-1 defeat.",
     blurb: "Powerful and direct, wins physical duels and attacks crosses aggressively." },
-  "Norway":                 { code: "no", flag: "🇳🇴", strength: 81, momentum: 79, form: 84, style: "DIRECT",
+  "Norway":                 { code: "no", flag: "🇳🇴", strength: 81, momentum: 79, form: 84, style: "DIRECT", eliminated: true,
+    eliminatedNote: "Out — beaten 2-1 by England after extra time in the quarterfinal; Schjelderup's 36th-minute opener was cancelled out by Jude Bellingham twice, the winner coming 3 minutes into extra time.",
     formNote: "The story of the round — Haaland scored twice in the final 11 minutes to stun Brazil 2-1 and reach the quarterfinals. Direct and lethal late, but plays a high-ish line WITHOUT recovery pace behind it (France exposed exactly that, 4-1, in the group).",
     blurb: "Gets the ball to Haaland fast and attacks the box in numbers — deadly in the closing stages, but the high line is vulnerable to pace in behind." },
   "Sweden":                 { code: "se", flag: "🇸🇪", strength: 76, momentum: 73, form: 68, style: "DIRECT", eliminated: true,
@@ -310,18 +312,18 @@ const RESULTS = [
   { round: "Round of 16", date: "Jul 7", a: "Switzerland", b: "Colombia", scoreA: 0, scoreB: 0, pred: [1, 2], note: "aet — Switzerland won 4-3 on penalties", goalsA: [], goalsB: [] }, // live pick 1-2 Colombia — miss (0-0 draw at 120')
   { round: "Quarterfinal", date: "Jul 9", a: "Morocco", b: "France", scoreA: 0, scoreB: 2, pred: [0, 2], note: "Mbappé missed a first-half penalty (28') but made amends on the hour mark; Dembélé added a second in the 66th.", goalsA: [], goalsB: [60, 66] }, // live pick 0-2 France — exact
   { round: "Quarterfinal", date: "Jul 10", a: "Spain", b: "Belgium", scoreA: 2, scoreB: 1, pred: [2, 1], note: "Fabián Ruiz opened the scoring, De Ketelaere equalized, Merino won it with a late rebound just seconds after coming off the bench.", goalsA: [30, 88], goalsB: [41] }, // live pick 2-1 Spain — exact
+  { round: "Quarterfinal", date: "Jul 11", a: "Norway", b: "England", scoreA: 1, scoreB: 2, pred: [1, 2], note: "aet — Schjelderup put Norway ahead, Bellingham equalized in first-half stoppage time then won it 3 minutes into extra time.", goalsA: [36], goalsB: [45, 93] }, // live pick 1-2 England — exact
+  { round: "Quarterfinal", date: "Jul 11", a: "Argentina", b: "Switzerland", scoreA: 3, scoreB: 1, pred: [2, 1], note: "aet — Mac Allister opener, Ndoye equalized, Embolo sent off for a second yellow, then Álvarez (112', a 25-yard curler) and Lautaro Martínez (120+1') sealed it in extra time.", goalsA: [10, 112, 120], goalsB: [67] }, // live pick 2-1 Argentina (winner) — exact scoreline was 3-1
 ];
 
 // Upcoming fixtures — everything still to be played. The Predictions tab
 // covers all of these. venueCountry powers the home-advantage bump for the
 // three host nations.
 const FIXTURES = [
-  { round: "Quarterfinal", date: "Jul 11", venue: "Miami Gardens", venueCountry: "US", a: "Norway",   b: "England",
-    pred: [1, 2], // LIVE pre-game prediction, captured Jul 9 (1-2 England, 28/22/50)
-    insight: "England will be without Jarell Quansah for this one — FIFA handed him a two-match ban (covering the semifinal too, if England get there) for his red card against Mexico. He was part of a back line specifically noted as young and genuinely quick; the expected reshuffle (Konsa into a back-line role, Stones or Burn partnering Guéhi) trades some of that recovery pace for size and experience, which matters against a Norway side built to spring Haaland in behind." },
-  { round: "Quarterfinal", date: "Jul 11", venue: "Kansas City", venueCountry: "US", a: "Argentina",   b: "Switzerland", pred: [2, 1] }, // LIVE pre-game prediction, captured Jul 9 (2-1 Argentina, 53/24/22)
   { round: "Semifinal", date: "Jul 14", venue: "Dallas Stadium (Arlington)", venueCountry: "US", a: "France", b: "Spain",
     pred: [2, 1] }, // LIVE pre-game prediction, captured Jul 11 (2-1 France, 45/25/30)
+  { round: "Semifinal", date: "Jul 15", venue: "Atlanta", venueCountry: "US", a: "England", b: "Argentina",
+    pred: [1, 2] }, // LIVE pre-game prediction, captured Jul 12 (1-2 Argentina, 33/25/42)
 ];
 
 // ---------------------------------------------------------------------------
