@@ -29,20 +29,20 @@ const STYLES = {
 //   The prediction model blends strength (40%) + momentum (35%) + form (25%).
 const TEAMS = {
   "Argentina":              { code: "ar", flag: "🇦🇷", strength: 92, momentum: 90, form: 93, style: "BALANCED",
-    formNote: "Into the quarterfinals, but the hard way — both knockout wins (3-2 Cape Verde aet, 3-2 Egypt) needed late goals after nervy finishes. Messi (7 goals) is carrying them. Otamendi is benched; Romero + Lisandro Martínez are the athletic CB pairing now.",
+    formNote: "Into the semifinal — after two nervy 3-2 knockout escapes, the 3-1 aet QF win over Switzerland was more controlled once Álvarez's 112' curler broke it open. Messi (8 goals) is carrying them. Otamendi is benched; Romero + Lisandro Martínez are the athletic CB pairing now. No new injuries or suspensions reported for the England semi.",
     blurb: "Controls games through midfield discipline, then drops deep and counters when ahead — happy to win ugly, as the two 3-2 knockout escapes show." },
   "France":                 { code: "fr", flag: "🇫🇷", strength: 91, momentum: 88, form: 93, style: "COUNTER",
-    formNote: "Into the quarterfinals with the tournament's most feared attack (attack factor 1.67 — elite; Mbappé leading the golden boot race) after a 3-0 Sweden win and a grittier 1-0 over Paraguay. BUT Tchouaméni is OUT (adductor tear) for the Morocco QF, thinning the midfield shield.",
+    formNote: "Six wins from six and into the semifinal — the tournament's most feared attack (Mbappé 8 of France's 16 goals) after a 2-0 QF win over Morocco. Tchouaméni is BACK and starts the Spain semi alongside Rabiot, restoring the midfield shield; Koné (injured vs Morocco) misses out. Barcola starts over Doué on the left.",
     blurb: "Doesn't need the ball — wins it back and breaks at pace through Mbappé/Olise. Ruthless in transition, but its speed can be smothered by a disciplined low block (see Morocco QF)." },
   "Spain":                  { code: "es", flag: "🇪🇸", strength: 90, momentum: 94, form: 92, style: "POSSESSION",
-    formNote: "Into the quarterfinals having barely conceded all tournament (goals-against factor 0.53 — the best left) — a 1-0 win over Portugal sealed by Merino in the 90+1'. Without the injured Nico Williams, so more control than pace out wide.",
+    formNote: "Into the semifinal having barely conceded all tournament (goals-against factor among the best left) — Merino's late winners sank Portugal and Belgium. Confirmed semi XI: Pedri and Merino are BENCHED — Fabián Ruiz partners Rodri, Baena on the left, Oyarzabal leads the line. Still without the injured Nico Williams, so more control than pace out wide.",
     blurb: "Modern tiki-taka: relentless short passing to suffocate opponents. Elite defensively too — but a VERY high line with slow fullbacks (no Carvajal) can be exploited in behind by real pace." },
   "Brazil":                 { code: "br", flag: "🇧🇷", strength: 88, momentum: 82, form: 84, style: "POSSESSION", eliminated: true,
     eliminatedNote: "Out — beaten 2-1 by Norway in the round of 16 (Haaland scored twice in the final 11 minutes); Neymar's stoppage-time penalty was too little too late.",
     formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
     blurb: "Technical, flair-driven possession built around quick combinations in tight spaces." },
   "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED",
-    formNote: "Into the quarterfinals after a 3-2 slugfest with Mexico. Quansah is suspended for the Norway QF, but the CONFIRMED XI keeps the quick back line — Djed Spence comes in at RB, Konsa/Guéhi/O'Reilly stay, Stones benched — so no trade of pace for size. Guéhi passed a late hamstring test; Saka drops out for the equally-pacy Madueke.",
+    formNote: "Into the semifinal after Bellingham's brace beat Norway 2-1 aet. Quansah's 2-match ban still covers the Argentina semi, so the makeshift-but-quick back line (Spence at RB) continues; Henderson (broken arm, celebration mishap) is a doubt but a bench player anyway. No other confirmed absences.",
     blurb: "Patient build-up with license to go direct through pacey wide forwards (Gordon, Madueke); a young, athletic back four — quick, but can be leaky." },
   "Portugal":               { code: "pt", flag: "🇵🇹", strength: 86, momentum: 88, form: 88, style: "COUNTER", eliminated: true,
     eliminatedNote: "Out — beaten 1-0 by Spain in the round of 16, Mikel Merino scoring an injury-time winner in the 90+1'. Cristiano Ronaldo's final World Cup ends without a trophy.",
@@ -158,10 +158,12 @@ const TEAMS = {
 // Rodrygo (ACL, never made the squad), Raphinha (hamstring, out vs Norway),
 // Foden & Palmer (not in Tuchel's 26), Griezmann (retired from France duty
 // 2024), Shaqiri (retired from Switzerland duty 2024) all removed.
+// Jul 14 semifinal update: Pedri dropped from Spain's trio — benched in the
+// confirmed XI vs France (Fabián Ruiz starts and takes the #3 slot).
 const PLAYMAKERS = {
   "Argentina":   [{ name: "Messi", creativity: 9.8 }, { name: "Julián Álvarez", creativity: 8.6 }, { name: "Enzo Fernández", creativity: 8.4 }],
   "France":      [{ name: "Mbappé", creativity: 9.5 }, { name: "Dembélé", creativity: 9.0 }, { name: "Olise", creativity: 8.8 }],
-  "Spain":       [{ name: "Lamine Yamal", creativity: 9.4 }, { name: "Pedri", creativity: 9.0 }, { name: "Dani Olmo", creativity: 8.6 }],
+  "Spain":       [{ name: "Lamine Yamal", creativity: 9.4 }, { name: "Dani Olmo", creativity: 8.6 }, { name: "Fabián Ruiz", creativity: 8.2 }], // Pedri BENCHED in the confirmed semi XI vs France (Jul 14) — Fabián Ruiz starts; Pedri may still impact off the bench
   "Brazil":      [{ name: "Vinícius Jr", creativity: 9.3 }, { name: "Paquetá", creativity: 8.2 }, { name: "Matheus Cunha", creativity: 8.0 }],
   "England":     [{ name: "Bellingham", creativity: 9.2 }, { name: "Saka", creativity: 8.9 }, { name: "Kane", creativity: 8.8 }],
   "Portugal":    [{ name: "Bruno Fernandes", creativity: 9.0 }, { name: "Bernardo Silva", creativity: 8.8 }, { name: "Leão", creativity: 8.3 }],
@@ -321,7 +323,8 @@ const RESULTS = [
 // three host nations.
 const FIXTURES = [
   { round: "Semifinal", date: "Jul 14", venue: "Dallas Stadium (Arlington)", venueCountry: "US", a: "France", b: "Spain",
-    pred: [2, 1] }, // LIVE pre-game prediction, captured Jul 11 (2-1 France, 45/25/30)
+    pred: [2, 1], // LIVE pre-game prediction, captured Jul 11 (2-1 France, 45/25/30)
+    insight: "CONFIRMED XIs (Jul 14): France welcome Tchouaméni back alongside Rabiot — the midfield shield that was missing vs Morocco is restored just in time to disrupt Rodri's tempo. Barcola starts over Doué, giving France TWO out-and-out burners (with Mbappé) against the tournament's most exploitable combination: Spain's very high line and a slow back four (Porro–Cubarsí–Laporte–Cucurella, no Carvajal). Spain counter with control: Pedri and Merino are benched — Fabián Ruiz partners Rodri, Baena starts left, Oyarzabal leads the line. The shape of the game is set: Spain will have the ball; France only need it for six seconds at a time." },
   { round: "Semifinal", date: "Jul 15", venue: "Atlanta", venueCountry: "US", a: "England", b: "Argentina",
     pred: [1, 2] }, // LIVE pre-game prediction, captured Jul 12 (1-2 Argentina, 33/25/42)
 ];
