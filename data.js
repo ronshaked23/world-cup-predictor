@@ -31,7 +31,8 @@ const TEAMS = {
   "Argentina":              { code: "ar", flag: "🇦🇷", strength: 92, momentum: 90, form: 93, style: "BALANCED",
     formNote: "Into the semifinal — after two nervy 3-2 knockout escapes, the 3-1 aet QF win over Switzerland was more controlled once Álvarez's 112' curler broke it open. Messi (8 goals) is carrying them. Otamendi is benched; Romero + Lisandro Martínez are the athletic CB pairing now. No new injuries or suspensions reported for the England semi.",
     blurb: "Controls games through midfield discipline, then drops deep and counters when ahead — happy to win ugly, as the two 3-2 knockout escapes show." },
-  "France":                 { code: "fr", flag: "🇫🇷", strength: 91, momentum: 88, form: 93, style: "COUNTER",
+  "France":                 { code: "fr", flag: "🇫🇷", strength: 91, momentum: 88, form: 93, style: "COUNTER", eliminated: true,
+    eliminatedNote: "Out of title contention — beaten 2-0 by Spain in the semifinal (Oyarzabal penalty 22', Porro 58'), Spain's low-block-and-break-in-transition plan denying Mbappé the space he thrives in. France now play England for third place (Jul 18, Miami).",
     formNote: "Six wins from six and into the semifinal — the tournament's most feared attack (Mbappé 8 of France's 16 goals) after a 2-0 QF win over Morocco. Tchouaméni is BACK and starts the Spain semi alongside Rabiot, restoring the midfield shield; Koné (injured vs Morocco) misses out. Barcola starts over Doué on the left.",
     blurb: "Doesn't need the ball — wins it back and breaks at pace through Mbappé/Olise. Ruthless in transition, but its speed can be smothered by a disciplined low block (see Morocco QF)." },
   "Spain":                  { code: "es", flag: "🇪🇸", strength: 90, momentum: 94, form: 92, style: "POSSESSION",
@@ -41,7 +42,8 @@ const TEAMS = {
     eliminatedNote: "Out — beaten 2-1 by Norway in the round of 16 (Haaland scored twice in the final 11 minutes); Neymar's stoppage-time penalty was too little too late.",
     formNote: "Only 2-1 past Japan in the round of 32 — a narrower, more laboured win than a title favorite would like — then blown past by Norway's late double in the round of 16.",
     blurb: "Technical, flair-driven possession built around quick combinations in tight spaces." },
-  "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED",
+  "England":                { code: "gb-eng", flag: "🏴", strength: 87, momentum: 93, form: 83, style: "BALANCED", eliminated: true,
+    eliminatedNote: "Out of title contention — led 1-0 through Anthony Gordon's 55th-minute strike but Argentina scored twice in the final 6 minutes (Enzo Fernández 85', Lautaro Martínez 90+2', both Messi-assisted) to win 2-1 in the semifinal. England now play France for third place (Jul 18, Miami).",
     formNote: "Into the semifinal after Bellingham's brace beat Norway 2-1 aet. Quansah's 2-match ban still covers the Argentina semi, so the makeshift-but-quick back line (Spence at RB) continues; Henderson (broken arm, celebration mishap) is a doubt but a bench player anyway. No other confirmed absences.",
     blurb: "Patient build-up with license to go direct through pacey wide forwards (Gordon, Madueke); a young, athletic back four — quick, but can be leaky." },
   "Portugal":               { code: "pt", flag: "🇵🇹", strength: 86, momentum: 88, form: 88, style: "COUNTER", eliminated: true,
@@ -316,17 +318,18 @@ const RESULTS = [
   { round: "Quarterfinal", date: "Jul 10", a: "Spain", b: "Belgium", scoreA: 2, scoreB: 1, pred: [2, 1], note: "Fabián Ruiz opened the scoring, De Ketelaere equalized, Merino won it with a late rebound just seconds after coming off the bench.", goalsA: [30, 88], goalsB: [41] }, // live pick 2-1 Spain — exact
   { round: "Quarterfinal", date: "Jul 11", a: "Norway", b: "England", scoreA: 1, scoreB: 2, pred: [1, 2], note: "aet — Schjelderup put Norway ahead, Bellingham equalized in first-half stoppage time then won it 3 minutes into extra time.", goalsA: [36], goalsB: [45, 93] }, // live pick 1-2 England — exact
   { round: "Quarterfinal", date: "Jul 11", a: "Argentina", b: "Switzerland", scoreA: 3, scoreB: 1, pred: [2, 1], note: "aet — Mac Allister opener, Ndoye equalized, Embolo sent off for a second yellow, then Álvarez (112', a 25-yard curler) and Lautaro Martínez (120+1') sealed it in extra time.", goalsA: [10, 112, 120], goalsB: [67] }, // live pick 2-1 Argentina (winner) — exact scoreline was 3-1
+  { round: "Semifinal", date: "Jul 14", a: "France", b: "Spain", scoreA: 0, scoreB: 2, pred: [2, 1], note: "Oyarzabal converted a penalty (foul on Yamal) then Porro slotted in a slick move started by Dani Olmo — Spain's control and low-block-in-transition defending shut Mbappé out completely.", goalsA: [], goalsB: [22, 58] }, // live pick 2-1 France — miss (Spain won going away)
+  { round: "Semifinal", date: "Jul 15", a: "England", b: "Argentina", scoreA: 1, scoreB: 2, pred: [1, 2], note: "Anthony Gordon put England ahead 55' but Messi set up both a late Enzo Fernández strike (85') and Lautaro Martínez's 90+2' winner.", goalsA: [55], goalsB: [85, 90] }, // live pick 1-2 Argentina (winner) — exact
+  { round: "Third Place", date: "Jul 18", venue: "Miami", a: "France", b: "England", scoreA: 4, scoreB: 6, pred: [2, 1], note: "10-goal thriller — England raced to a 4-0 halftime lead (Rice 3', Konsa 18', Saka 37' & 45+2') before Mbappé (48', 66') and Barcola (54') pulled France to 4-3; Saka's 87th-minute penalty completed his hat-trick and made it 5-3, then Dembélé (90+6') and Bellingham (90+8') traded late goals for the final 6-4. Mbappé's second goal made him the all-time FIFA World Cup top scorer.", goalsA: [48, 54, 66, 90], goalsB: [3, 18, 37, 45, 87, 90] }, // no live pred existed (fixture never detected in time) — computed retroactively via predictMatch before recording: 2-1 France — miss (England won)
 ];
 
 // Upcoming fixtures — everything still to be played. The Predictions tab
 // covers all of these. venueCountry powers the home-advantage bump for the
 // three host nations.
 const FIXTURES = [
-  { round: "Semifinal", date: "Jul 14", venue: "Dallas Stadium (Arlington)", venueCountry: "US", a: "France", b: "Spain",
-    pred: [2, 1], // LIVE pre-game prediction, captured Jul 11 (2-1 France, 45/25/30)
-    insight: "CONFIRMED XIs (Jul 14): France welcome Tchouaméni back alongside Rabiot — the midfield shield that was missing vs Morocco is restored just in time to disrupt Rodri's tempo. Barcola starts over Doué, giving France TWO out-and-out burners (with Mbappé) against the tournament's most exploitable combination: Spain's very high line and a slow back four (Porro–Cubarsí–Laporte–Cucurella, no Carvajal). Spain counter with control: Pedri and Merino are benched — Fabián Ruiz partners Rodri, Baena starts left, Oyarzabal leads the line. The shape of the game is set: Spain will have the ball; France only need it for six seconds at a time." },
-  { round: "Semifinal", date: "Jul 15", venue: "Atlanta", venueCountry: "US", a: "England", b: "Argentina",
-    pred: [1, 2] }, // LIVE pre-game prediction, captured Jul 12 (1-2 Argentina, 33/25/42)
+  { round: "Final", date: "Jul 19", venue: "New York New Jersey Stadium (East Rutherford)", venueCountry: "US", a: "Spain", b: "Argentina",
+    pred: [2, 1], // LIVE pre-game prediction, captured Jul 19 (2-1 Spain, 40/26/34, Low confidence — genuine toss-up)
+    insight: "A first-ever World Cup final between these two: reigning European champions Spain vs reigning world champions Argentina. Spain's tiki-taka control (66% projected possession) meets Argentina's pace in behind (Messi/Álvarez punishing Spain's very high line, still without the injured Nico Williams for outlet pace of its own). The model calls this a genuine coin-flip — strength and momentum both favour Argentina fractionally, form is dead level, and no tactical mismatch clearly separates the sides." },
 ];
 
 // ---------------------------------------------------------------------------
