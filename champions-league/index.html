@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Champions League 2026/27 — Table, Ratings & Predictions</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <header>
+    <h1>⭐ Champions League <span class="accent">2026/27</span> Dashboard</h1>
+    <p class="subtitle" id="subtitle"></p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="table">League Table</button>
+    <button class="tab-btn" data-tab="matches">Matches &amp; Predictions</button>
+    <button class="tab-btn" data-tab="ratings">Team Ratings</button>
+    <button class="tab-btn" data-tab="method">How It Works</button>
+  </nav>
+
+  <main>
+    <section id="table" class="tab-panel active">
+      <h2>League Phase Standings</h2>
+      <p class="legend">
+        <span class="zone-chip z-top8">1-8 → Round of 16</span>
+        <span class="zone-chip z-po">9-24 → Knockout play-offs</span>
+        <span class="zone-chip z-out">25-36 → Eliminated</span>
+      </p>
+      <p class="disclaimer">Odds come from <strong id="sim-count">10,000</strong> simulations of the remaining fixtures, using the prediction model below. Click a column header to sort.</p>
+      <div class="table-wrap"><table class="league-table" id="league-table"></table></div>
+    </section>
+
+    <section id="matches" class="tab-panel">
+      <h2>Matches &amp; Predictions</h2>
+      <div class="md-picker" id="md-picker"></div>
+      <div id="md-summary"></div>
+      <div id="matches-list"></div>
+    </section>
+
+    <section id="ratings" class="tab-panel">
+      <h2>Team Ratings</h2>
+      <p class="ratings-legend">
+        <strong>Squad</strong> — player quality, from squad market value (log scale).
+        <strong>Momentum</strong> — the last two domestic seasons (70% 2025-26 / 30% 2024-25), discounted by league strength, plus a bonus for last season's Champions League run.
+        <strong>Form</strong> — this season only: domestic results since mid-August (league-discounted) and this Champions League, opponent- and venue-adjusted.
+        <strong>Overall</strong> = 40% squad + 30% momentum + 30% form.
+      </p>
+      <div class="filters" id="league-filters"></div>
+      <div id="teams-grid" class="teams-grid"></div>
+    </section>
+
+    <section id="method" class="tab-panel">
+      <h2>How It Works</h2>
+      <div class="method" id="method-body"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Data is a manual snapshot. Edit <code>data.js</code> (fill in scores in <code>MATCHES</code>, update each team's <code>dom</code> record) and every rating, prediction and simulation recomputes.</p>
+  </footer>
+
+  <!-- bump ?v= when editing these files so browsers don't serve stale copies -->
+  <script src="data.js?v=1"></script>
+  <script src="predict.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
