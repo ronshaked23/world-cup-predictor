@@ -209,3 +209,11 @@ code { background: var(--bg-card-2); padding: 1px 5px; border-radius: 3px; }
 /* pick scorecard */
 .sc-line { margin-top: 6px; }
 .tag-exact { background: rgba(79, 195, 255, 0.2); color: var(--gold); }
+
+/* team news */
+.news-box { margin-top: 10px; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; }
+.news-head { font-weight: 800; color: var(--amber); }
+.news-box ul, .team-news { margin: 6px 0 0; padding-left: 18px; }
+.news-box li, .team-news li { margin: 3px 0; }
+.news-adj { font-weight: 800; color: var(--amber); font-variant-numeric: tabular-nums; }
+.team-news { font-size: 0.78rem; color: #c9d0ea; margin-bottom: 8px; }

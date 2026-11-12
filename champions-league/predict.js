@@ -187,8 +187,24 @@ function computeOpenness() {
 // ---------------------------------------------------------------------------
 // GOAL MODEL
 // ---------------------------------------------------------------------------
-function attackFactor(name) { return Math.exp((RATINGS[name].rating - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].atk; }
-function defenceFactor(name) { return Math.exp(-(RATINGS[name].rating - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].def; }
+// NEWS (data.js) — injuries, suspensions, rotation, from the pre-match check.
+// Each item shifts a team's rating for one matchday (md) or, without md, for
+// every remaining game (long-term absences). Split into attack and defence
+// so a missing striker and a missing centre-back hurt different ends.
+function newsFor(name, md) {
+  const items = (typeof NEWS !== "undefined" && NEWS[name]) || [];
+  return items.filter(n => n.md == null || n.md === md);
+}
+function newsShift(name, md) {
+  return newsFor(name, md).reduce((s, n) => {
+    const atk = n.atk != null ? n.atk : (n.adj || 0);
+    const def = n.def != null ? n.def : (n.adj || 0);
+    return { atk: s.atk + atk, def: s.def + def };
+  }, { atk: 0, def: 0 });
+}
+
+function attackFactor(name, shift = 0) { return Math.exp((RATINGS[name].rating + shift - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].atk; }
+function defenceFactor(name, shift = 0) { return Math.exp(-(RATINGS[name].rating + shift - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].def; }
 
 function venueMultipliers(home, away) {
   const vh = RATINGS[home].venue, va = RATINGS[away].venue;
@@ -198,12 +214,14 @@ function venueMultipliers(home, away) {
   };
 }
 
-function expectedGoals(home, away) {
+function expectedGoals(home, away, md, ignoreNews) {
   const th = TEAMS[home], ta = TEAMS[away];
   const v = venueMultipliers(home, away);
   const env = Math.pow(RATINGS[home].openness * RATINGS[away].openness, 0.25);
-  const lamH = BASE_GOALS * attackFactor(home) * defenceFactor(away) * goalMatchupMul(th.style, ta.style) * v.home * env;
-  const lamA = BASE_GOALS * attackFactor(away) * defenceFactor(home) * goalMatchupMul(ta.style, th.style) * v.away * env;
+  const zero = { atk: 0, def: 0 };
+  const nh = ignoreNews ? zero : newsShift(home, md), na = ignoreNews ? zero : newsShift(away, md);
+  const lamH = BASE_GOALS * attackFactor(home, nh.atk) * defenceFactor(away, na.def) * goalMatchupMul(th.style, ta.style) * v.home * env;
+  const lamA = BASE_GOALS * attackFactor(away, na.atk) * defenceFactor(home, nh.def) * goalMatchupMul(ta.style, th.style) * v.away * env;
   return [clamp(lamH, 0.2, 4.2), clamp(lamA, 0.2, 4.2)];
 }
 
@@ -258,17 +276,23 @@ function pickHeadline(xgA, xgB, base) {
 // ---------------------------------------------------------------------------
 // MATCH PREDICTION
 // ---------------------------------------------------------------------------
+// md = the matchday (selects which NEWS items apply). ignoreNews gives the
+// pure-model view, used to show what the news changed.
 const predictionCache = {};
-function predictMatch(home, away) {
-  const key = home + "|" + away;
+function predictMatch(home, away, md, ignoreNews = false) {
+  const key = [home, away, md, ignoreNews].join("|");
   if (predictionCache[key]) return predictionCache[key];
-  const [xgH, xgA] = expectedGoals(home, away);
+  const [xgH, xgA] = expectedGoals(home, away, md, ignoreNews);
   const dist = scoreDistribution(xgH, xgA);
   const pick = pickHeadline(xgH, xgA, dist);
   const over25 = dist.cells.reduce((s, c) => s + (c.a + c.b >= 3 ? c.prob : 0), 0);
   const btts = dist.cells.reduce((s, c) => s + (c.a > 0 && c.b > 0 ? c.prob : 0), 0);
+  const news = ignoreNews ? [] : [
+    ...newsFor(home, md).map(n => ({ team: home, ...n })),
+    ...newsFor(away, md).map(n => ({ team: away, ...n })),
+  ];
   const res = {
-    home, away, xgH, xgA, dist, pick, over25, btts,
+    home, away, md, xgH, xgA, dist, pick, over25, btts, news,
     pH: dist.winA, pD: dist.draw, pA: dist.winB,
     reasons: reasonsFor(home, away, xgH, xgA),
   };
@@ -340,7 +364,7 @@ function simulateLeague(nSims = 10000, seed = 20261026) {
   const idx = Object.fromEntries(names.map((n, i) => [n, i]));
   const base = names.map(n => teamUclRecord(n));
   const games = upcomingMatches().map(m => {
-    const p = predictMatch(m.h, m.a);
+    const p = predictMatch(m.h, m.a, m.md);
     let acc = 0;
     const cum = p.dist.cells.map(c => { acc += c.prob; return { a: c.a, b: c.b, c: acc }; });
     return { h: idx[m.h], a: idx[m.a], cum };

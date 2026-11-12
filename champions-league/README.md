@@ -34,4 +34,7 @@ Edit [`data.js`](data.js):
 - `MATCHES` — fill in `hs` / `as` for completed games.
 - `TEAMS[name].dom` — domestic record (games, W-D-L, goals, position, home/away split).
 
+- `NEWS` — the pre-match check: injuries, suspensions and rotation as rating shifts per team (`adj`, or `atk` / `def` for one end), for one matchday (`md`) or ongoing.
+- Before kickoff, store the pure model's pick in `pred` and the pick after news in `predNews`. The scorecard grades both, so you can see whether the news check helps.
+
 Ratings, predictions and odds all recompute from these inputs.

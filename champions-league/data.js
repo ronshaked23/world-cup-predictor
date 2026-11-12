@@ -242,9 +242,24 @@ const TEAMS = {
     blurb: "Azerbaijani champions and the smallest budget here. Lost 1-4 in Norway. Domestic numbers not refreshed since October." },
 };
 
+// Team news from the pre-match check (injuries, suspensions, rotation).
+// Each item shifts the team's rating for one matchday (md), or for every
+// remaining game when md is left out (long-term injury).
+//   adj  — rating points, applied to attack and defence alike
+//          (about -1 to -2 for a key starter out, -3 to -5 for several, up
+//          to +2 for a key player back)
+//   atk / def — use instead of adj to hit one end only (a missing striker:
+//          atk: -2; a missing centre-back: def: -2)
+//   note — what happened, shown on the prediction card; date — when checked
+// Example:
+//   "Liverpool": [{ md: 5, atk: -2, note: "First-choice striker out (hamstring)", date: "Nov 23" }],
+const NEWS = {
+};
+
 // League phase. md = matchday. Scores null = not played yet.
-// pred = the model's headline pick, stored BEFORE kickoff (live pick, used for
-// the scorecard). MD1-3 were played before the model existed, so they have none.
+// pred = the pure model's headline pick, stored BEFORE kickoff (live pick,
+// used for the scorecard). predNews = the pick after the pre-match NEWS check,
+// also stored before kickoff, so the two can be compared. MD1-3 were played before the model existed, so they have none.
 const MATCHDAY_DATES = {
   1: "Sep 8-10", 2: "Oct 13-14", 3: "Oct 20-21", 4: "Nov 3-4",
   5: "Nov 24-25", 6: "Dec 8-9", 7: "Jan 19-20", 8: "Jan 27",

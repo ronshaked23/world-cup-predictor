@@ -108,13 +108,14 @@ function probBar(p) {
 }
 
 function resultRow(m) {
-  const p = predictMatch(m.h, m.a);
+  const p = predictMatch(m.h, m.a, m.md);
   const outc = (a, b) => a > b ? "H" : a < b ? "A" : "D";
   const actual = outc(m.hs, m.as);
   const favP = { H: p.pH, D: p.pD, A: p.pA }[actual];
-  const g = gradePick(m);
+  const g = gradePick(m, "pred"), gn = gradePick(m, "predNews");
+  const tag = (gr, key, label) => `<span class="tag tag-${gr.cat}" title="Stored before kickoff">${label} ${m[key][0]}-${m[key][1]} · ${gr.label}</span>`;
   const note = g
-    ? `<span class="tag tag-${g.cat}" title="Pick stored before kickoff">pick ${m.pred[0]}-${m.pred[1]} · ${g.label}</span>`
+    ? tag(g, "pred", "pick") + (gn ? " " + tag(gn, "predNews", "+news") : "")
     : (favP < 0.25 ? `<span class="tag tag-upset" title="Today's model gives this result ${pct(favP)}">upset · ${pct(favP)}</span>` : "");
   return `<div class="match-row">
     <span class="match-team home">${teamLabel(m.h)}</span>
@@ -124,26 +125,52 @@ function resultRow(m) {
   </div>`;
 }
 
-// Grade a pick stored before kickoff (m.pred). Points like a prediction
-// league: 3 for the exact score, 1 for the right outcome.
-function gradePick(m) {
-  if (!Array.isArray(m.pred) || m.hs == null) return null;
+// Grade a pick stored before kickoff. key "pred" = the pure model's pick,
+// "predNews" = the pick after the pre-match injury/news check. Points like a
+// prediction league: 3 for the exact score, 1 for the right outcome.
+function gradePick(m, key = "pred") {
+  const pk = m[key];
+  if (!Array.isArray(pk) || m.hs == null) return null;
   const outc = (a, b) => a > b ? "H" : a < b ? "A" : "D";
-  if (m.pred[0] === m.hs && m.pred[1] === m.as) return { cat: "exact", label: "exact ✓", pts: 3 };
-  if (outc(m.pred[0], m.pred[1]) === outc(m.hs, m.as)) return { cat: "good", label: "result ✓", pts: 1 };
+  if (pk[0] === m.hs && pk[1] === m.as) return { cat: "exact", label: "exact ✓", pts: 3 };
+  if (outc(pk[0], pk[1]) === outc(m.hs, m.as)) return { cat: "good", label: "result ✓", pts: 1 };
   return { cat: "bad", label: "miss", pts: 0 };
 }
 
-function scorecard(ms) {
-  const graded = ms.map(gradePick).filter(Boolean);
+function scorecard(ms, key = "pred", label = "Picks") {
+  const graded = ms.map(m => gradePick(m, key)).filter(Boolean);
   if (!graded.length) return "";
   const res = graded.filter(g => g.pts > 0).length, exact = graded.filter(g => g.pts === 3).length;
   const pts = graded.reduce((s, g) => s + g.pts, 0);
-  return `Picks: <strong>${res}/${graded.length}</strong> results right, <strong>${exact}</strong> exact scores · ${pts} pts (3 exact / 1 result)`;
+  return `${label}: <strong>${res}/${graded.length}</strong> results right, <strong>${exact}</strong> exact scores · ${pts} pts (3 exact / 1 result)`;
+}
+
+// Same games, both pick sets — the only fair test of whether the pre-match
+// news check helps: compare on the games where both picks were stored.
+function newsComparison(ms) {
+  const both = ms.filter(m => Array.isArray(m.pred) && Array.isArray(m.predNews) && m.hs != null);
+  if (!both.length) return "";
+  const pts = key => both.reduce((s, m) => s + gradePick(m, key).pts, 0);
+  return `News check on ${both.length} games: model alone <strong>${pts("pred")}</strong> pts → with news <strong>${pts("predNews")}</strong> pts`;
+}
+
+function newsBlock(p, m) {
+  if (!p.news.length) return "";
+  const base = predictMatch(m.h, m.a, m.md, true);
+  const shift = n => {
+    const a = n.atk != null ? n.atk : (n.adj || 0), d = n.def != null ? n.def : (n.adj || 0);
+    if (a === d) return signed(a);
+    return [a ? `atk ${signed(a)}` : "", d ? `def ${signed(d)}` : ""].filter(Boolean).join(" / ");
+  };
+  const items = p.news.map(n => `<li><strong>${n.team}</strong> <span class="news-adj">${shift(n)}</span> — ${n.note}${n.date ? ` <span class="muted">(${n.date})</span>` : ""}</li>`).join("");
+  return `<div class="news-box">
+    <div class="news-head">Team news <span class="muted">· model alone: ${pct(base.pH)} / ${pct(base.pD)} / ${pct(base.pA)}, pick ${base.pick.a}-${base.pick.b}</span></div>
+    <ul>${items}</ul>
+  </div>`;
 }
 
 function predictionCard(m) {
-  const p = predictMatch(m.h, m.a);
+  const p = predictMatch(m.h, m.a, m.md);
   const top = p.dist.top.map(c => `<span class="sc">${c.a}-${c.b} <em>${pct(c.prob)}</em></span>`).join("");
   const rh = RATINGS[m.h], ra = RATINGS[m.a];
   const sh = SIM[m.h], sa = SIM[m.a];
@@ -160,6 +187,7 @@ function predictionCard(m) {
       <span>Over 2.5: <strong>${pct(p.over25)}</strong></span>
       <span>Both score: <strong>${pct(p.btts)}</strong></span>
     </div>
+    ${newsBlock(p, m)}
     <ul class="reasons">${p.reasons.map(r => `<li>${r}</li>`).join("")}</ul>
     <div class="pred-stakes">Top-8 odds now: ${m.h} <strong>${pct(sh.top8)}</strong> · ${m.a} <strong>${pct(sa.top8)}</strong>${m.day ? ` · <span class="muted">${m.day}</span>` : ""}</div>
   </div>`;
@@ -175,11 +203,13 @@ function renderMatches() {
     const homeW = played.filter(m => m.hs > m.as).length, draws = played.filter(m => m.hs === m.as).length;
     const sc = scorecard(played);
     const season = scorecard(playedMatches());
+    const nc = newsComparison(played), ncSeason = newsComparison(playedMatches());
     summary = `<div class="summary-bar">Matchday ${currentMd}: <strong>${goals} goals</strong> in ${played.length} games (${(goals / played.length).toFixed(2)} per game) · home wins ${homeW}, draws ${draws}, away wins ${played.length - homeW - draws}
-      ${sc ? `<div class="sc-line">${sc}${season !== sc ? ` <span class="muted">· season: ${season.replace("Picks: ", "")}</span>` : ""}</div>` : ""}</div>`;
+      ${sc ? `<div class="sc-line">${sc}${season !== sc ? ` <span class="muted">· season: ${season.replace("Picks: ", "")}</span>` : ""}</div>` : ""}
+      ${nc ? `<div class="sc-line">${nc}${ncSeason !== nc ? ` <span class="muted">· season: ${ncSeason}</span>` : ""}</div>` : ""}</div>`;
   } else {
-    const fav = upcoming.map(m => predictMatch(m.h, m.a)).map(p => ({ p, best: Math.max(p.pH, p.pA) })).sort((a, b) => b.best - a.best)[0];
-    const close = upcoming.map(m => predictMatch(m.h, m.a)).sort((a, b) => Math.abs(a.pH - a.pA) - Math.abs(b.pH - b.pA))[0];
+    const fav = upcoming.map(m => predictMatch(m.h, m.a, m.md)).map(p => ({ p, best: Math.max(p.pH, p.pA) })).sort((a, b) => b.best - a.best)[0];
+    const close = upcoming.map(m => predictMatch(m.h, m.a, m.md)).sort((a, b) => Math.abs(a.pH - a.pA) - Math.abs(b.pH - b.pA))[0];
     if (fav && close) {
       const favName = fav.p.pH > fav.p.pA ? fav.p.home : fav.p.away;
       summary = `<div class="summary-bar">Banker: <strong>${favName}</strong> (${pct(fav.best)}) · Tightest game: <strong>${close.home} – ${close.away}</strong></div>`;
@@ -224,7 +254,7 @@ function renderTeams() {
     const r = RATINGS[name], v = r.venue, lg = LEAGUES[t.league], d = t.dom, s = SIM[name];
     const remaining = upcomingMatches().filter(m => m.h === name || m.a === name).map(m => {
       const home = m.h === name, opp = home ? m.a : m.h;
-      const p = predictMatch(m.h, m.a);
+      const p = predictMatch(m.h, m.a, m.md);
       const win = home ? p.pH : p.pA;
       const cls = win >= 0.55 ? "easy" : win >= 0.35 ? "mid" : "hard";
       return `<span class="fx ${cls}" title="MD${m.md}: ${home ? "home" : "away"} vs ${opp} — win ${pct(win)}">${home ? "" : "@"}${TEAMS[opp].short}</span>`;
@@ -248,10 +278,19 @@ function renderTeams() {
         ${v.splitKnown ? "" : `<div class="muted small">No match-by-match data for this league — venue form uses this season's Champions League games only.</div>`}
       </div>
       <p class="blurb">${t.blurb}</p>
+      ${teamNewsList(name)}
       <div class="fixtures-strip"><span class="muted small">Remaining:</span> ${remaining}</div>
       <div class="qual-strip">Top 8 <strong>${pct(s.top8)}</strong> · 9-24 <strong>${pct(s.playoff)}</strong> · Out <strong>${pct(s.out)}</strong></div>
     </div>`;
   }).join("");
+}
+
+// Active news for a team: long-term items plus anything for an unplayed matchday.
+function teamNewsList(name) {
+  const next = nextMatchday();
+  const items = ((typeof NEWS !== "undefined" && NEWS[name]) || []).filter(n => n.md == null || n.md >= next);
+  if (!items.length) return "";
+  return `<ul class="team-news">${items.map(n => `<li><span class="news-adj">${n.md ? "MD" + n.md : "ongoing"}</span> ${n.note}</li>`).join("")}</ul>`;
 }
 
 function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
@@ -287,7 +326,9 @@ function renderMethod() {
       <li>Game environment: teams whose games average lots of goals push the total up, and vice versa.</li>
       <li>Dixon-Coles correction for 0-0 / 1-1. The headline score is the most likely scoreline within the most likely outcome.</li>
     </ul>
-    <h3>5. Simulation</h3>
+    <h3>5. Team news</h3>
+    <p>The day before each matchday the injury, suspension and lineup news is checked and entered as a rating shift for the affected team: roughly −1 to −2 for a key starter out, −3 to −5 for several, and up to +2 when a key player returns. A shift can hit attack and defence separately: a missing striker lowers the team's attack, a missing centre-back weakens its defence. The prediction card shows each item and what the model said without it. Both picks are stored before kickoff, so the scorecard shows whether the news check actually improves the predictions.</p>
+    <h3>6. Simulation</h3>
     <p>Every remaining league-phase fixture is played ${SIMS.toLocaleString()} times by sampling a scoreline from its probability grid. Teams are then ranked with UEFA's tiebreakers (points, goal difference, goals scored, away goals, wins, away wins).</p>
     <h3>Format reminder</h3>
     <p>36 teams, 8 games each (4 home, 4 away). 1-8 go straight to the round of 16, 9-24 play two-legged play-offs in February, and 25-36 are out. The knockout bracket starts in February 2027 and will be added once the league phase ends.</p>
