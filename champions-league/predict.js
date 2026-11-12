@@ -120,33 +120,31 @@ function computeRatings() {
 }
 
 // ---------------------------------------------------------------------------
-// HOME / AWAY FORM — the last (up to) 10 home and 10 away games we have:
-// this season's domestic home/away split (where found) + Champions League
-// home/away games. Shrunk toward the team's overall points-per-game with 4
-// phantom games, so a 2-game sample can't swing a prediction.
+// HOME / AWAY FORM — each team's last 10 competitive home games and last 10
+// away games (league + UEFA, from data.js venue10). The edge is how much
+// better the team does at that venue than across all 20 games — a team that
+// wins everything everywhere has no venue edge, a home fortress does.
+// Shrunk with 4 phantom games so one odd result can't swing a prediction.
+// Teams without venue10 fall back to this season's Champions League games.
 // ---------------------------------------------------------------------------
 function computeVenueForm() {
+  const pts = r => 3 * r[0] + r[1];
+  const cnt = r => r[0] + r[1] + r[2];
   for (const [name, t] of Object.entries(TEAMS)) {
-    const rec = { home: [0, 0, 0], away: [0, 0, 0] };
-    if (t.dom.home) t.dom.home.forEach((v, i) => rec.home[i] += v);
-    if (t.dom.away) t.dom.away.forEach((v, i) => rec.away[i] += v);
-    playedMatches().forEach(m => {
-      if (m.h !== name && m.a !== name) return;
-      const home = m.h === name;
-      const gf = home ? m.hs : m.as, ga = home ? m.as : m.hs;
-      const idx = gf > ga ? 0 : gf === ga ? 1 : 2;
-      rec[home ? "home" : "away"][idx] += 1;
-    });
-    // keep it to the last 10 per venue (approximate: trim from the oldest bucket proportionally)
-    ["home", "away"].forEach(v => {
-      let n = rec[v][0] + rec[v][1] + rec[v][2];
-      if (n > 10) { rec[v] = rec[v].map(x => Math.round(x * 10 / n)); }
-    });
-    const pts = r => 3 * r[0] + r[1];
-    const cnt = r => r[0] + r[1] + r[2];
-    const d = t.dom;
-    const ucl = teamUclRecord(name);
-    const overall = (3 * (d.w + ucl.w) + d.d + ucl.d) / (d.gp + ucl.n);
+    let rec;
+    if (t.venue10) {
+      rec = { home: t.venue10.home, away: t.venue10.away };
+    } else {
+      rec = { home: [0, 0, 0], away: [0, 0, 0] };
+      playedMatches().forEach(m => {
+        if (m.h !== name && m.a !== name) return;
+        const home = m.h === name;
+        const gf = home ? m.hs : m.as, ga = home ? m.as : m.hs;
+        rec[home ? "home" : "away"][gf > ga ? 0 : gf === ga ? 1 : 2] += 1;
+      });
+    }
+    const n = cnt(rec.home) + cnt(rec.away);
+    const overall = n ? (pts(rec.home) + pts(rec.away)) / n : 1.4;
     const K = 4;
     const homePpg = (pts(rec.home) + K * overall) / (cnt(rec.home) + K);
     const awayPpg = (pts(rec.away) + K * overall) / (cnt(rec.away) + K);
@@ -154,7 +152,7 @@ function computeVenueForm() {
       home: rec.home, away: rec.away, overall,
       homePpg, awayPpg,
       homeEdge: homePpg - overall, awayEdge: awayPpg - overall,
-      splitKnown: !!(d.home && d.away),
+      splitKnown: !!t.venue10,
     };
   }
 }
@@ -297,7 +295,7 @@ function reasonsFor(home, away) {
   }
   const vh = rh.venue, va = ra.venue;
   const hRec = vh.home, aRec = va.away;
-  out.push(`${home} at home: ${hRec.join("-")} (W-D-L), ${vh.homePpg.toFixed(2)} pts/game · ${away} away: ${aRec.join("-")}, ${va.awayPpg.toFixed(2)} pts/game.`);
+  out.push(`Last 10 at home, ${home}: ${hRec.join("-")} (W-D-L) · last 10 away, ${away}: ${aRec.join("-")}.`);
   const mb = matchupBonus(TEAMS[home].style, TEAMS[away].style) - matchupBonus(TEAMS[away].style, TEAMS[home].style);
   if (Math.abs(mb) >= 3) {
     const fav = mb > 0 ? home : away, other = mb > 0 ? away : home;

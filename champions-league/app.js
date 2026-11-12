@@ -112,13 +112,34 @@ function resultRow(m) {
   const outc = (a, b) => a > b ? "H" : a < b ? "A" : "D";
   const actual = outc(m.hs, m.as);
   const favP = { H: p.pH, D: p.pD, A: p.pA }[actual];
-  const surprise = favP < 0.25 ? `<span class="tag tag-upset" title="The model (with today's ratings) gave this result ${pct(favP)}">upset · ${pct(favP)}</span>` : "";
+  const g = gradePick(m);
+  const note = g
+    ? `<span class="tag tag-${g.cat}" title="Pick stored before kickoff">pick ${m.pred[0]}-${m.pred[1]} · ${g.label}</span>`
+    : (favP < 0.25 ? `<span class="tag tag-upset" title="Today's model gives this result ${pct(favP)}">upset · ${pct(favP)}</span>` : "");
   return `<div class="match-row">
     <span class="match-team home">${teamLabel(m.h)}</span>
     <span class="match-score">${m.hs} – ${m.as}</span>
     <span class="match-team away">${teamLabel(m.a)}</span>
-    <span class="match-note">${surprise}</span>
+    <span class="match-note">${note}</span>
   </div>`;
+}
+
+// Grade a pick stored before kickoff (m.pred). Points like a prediction
+// league: 3 for the exact score, 1 for the right outcome.
+function gradePick(m) {
+  if (!Array.isArray(m.pred) || m.hs == null) return null;
+  const outc = (a, b) => a > b ? "H" : a < b ? "A" : "D";
+  if (m.pred[0] === m.hs && m.pred[1] === m.as) return { cat: "exact", label: "exact ✓", pts: 3 };
+  if (outc(m.pred[0], m.pred[1]) === outc(m.hs, m.as)) return { cat: "good", label: "result ✓", pts: 1 };
+  return { cat: "bad", label: "miss", pts: 0 };
+}
+
+function scorecard(ms) {
+  const graded = ms.map(gradePick).filter(Boolean);
+  if (!graded.length) return "";
+  const res = graded.filter(g => g.pts > 0).length, exact = graded.filter(g => g.pts === 3).length;
+  const pts = graded.reduce((s, g) => s + g.pts, 0);
+  return `Picks: <strong>${res}/${graded.length}</strong> results right, <strong>${exact}</strong> exact scores · ${pts} pts (3 exact / 1 result)`;
 }
 
 function predictionCard(m) {
@@ -152,7 +173,10 @@ function renderMatches() {
   if (played.length) {
     const goals = played.reduce((s, m) => s + m.hs + m.as, 0);
     const homeW = played.filter(m => m.hs > m.as).length, draws = played.filter(m => m.hs === m.as).length;
-    summary = `<div class="summary-bar">Matchday ${currentMd}: <strong>${goals} goals</strong> in ${played.length} games (${(goals / played.length).toFixed(2)} per game) · home wins ${homeW}, draws ${draws}, away wins ${played.length - homeW - draws}</div>`;
+    const sc = scorecard(played);
+    const season = scorecard(playedMatches());
+    summary = `<div class="summary-bar">Matchday ${currentMd}: <strong>${goals} goals</strong> in ${played.length} games (${(goals / played.length).toFixed(2)} per game) · home wins ${homeW}, draws ${draws}, away wins ${played.length - homeW - draws}
+      ${sc ? `<div class="sc-line">${sc}${season !== sc ? ` <span class="muted">· season: ${season.replace("Picks: ", "")}</span>` : ""}</div>` : ""}</div>`;
   } else {
     const fav = upcoming.map(m => predictMatch(m.h, m.a)).map(p => ({ p, best: Math.max(p.pH, p.pA) })).sort((a, b) => b.best - a.best)[0];
     const close = upcoming.map(m => predictMatch(m.h, m.a)).sort((a, b) => Math.abs(a.pH - a.pA) - Math.abs(b.pH - b.pA))[0];
@@ -164,7 +188,7 @@ function renderMatches() {
   document.getElementById("md-summary").innerHTML = summary;
   document.getElementById("matches-list").innerHTML =
     (played.length ? `<div class="results-list">${played.map(resultRow).join("")}</div>
-      <p class="disclaimer small">"Upset" = a result today's model would have given under 25%. Note: today's ratings already include these games, so this is a hindsight view, not a live scorecard.</p>` : "") +
+      <p class="disclaimer small">${played.some(m => m.pred) ? "Picks were stored before kickoff, so this is a real scorecard." : "No picks were stored for this matchday (the model didn't exist yet). \"Upset\" = a result today's model gives under 25% — a hindsight view, since today's ratings include these games."}</p>` : "") +
     upcoming.map(predictionCard).join("");
 }
 
@@ -218,10 +242,10 @@ function renderTeams() {
       ${barRow("Form", r.form, `Domestic ${r.domRaw.toFixed(1)} · Champions League ${r.uclForm.toFixed(1)}`)}
       <div class="facts">
         <div><span>2025-26</span>${ordinal(t.last.pos)}, ${t.last.pts} pts in ${t.last.gp}${lastUcl}</div>
-        <div><span>This season</span>${ordinal(d.pos)} in league · ${d.w}-${d.d}-${d.l}, ${d.gf}:${d.ga}</div>
-        <div><span>Home</span>${recordStr(v.home)} · ${v.homePpg.toFixed(2)} pts/g ${venueTag(v.homePpg)}</div>
-        <div><span>Away</span>${recordStr(v.away)} · ${v.awayPpg.toFixed(2)} pts/g ${venueTag(v.awayPpg)}</div>
-        ${v.splitKnown ? "" : `<div class="muted small">Domestic home/away split not found — venue form uses Champions League games only.</div>`}
+        <div><span>This season</span>${ordinal(d.pos)} in league · ${d.w}-${d.d}-${d.l}, ${d.gf}:${d.ga}${d.stale ? ' <span class="muted">(as of Oct 26)</span>' : ""}</div>
+        <div><span>Last 10 home</span>${recordStr(v.home)} · ${v.homePpg.toFixed(2)} pts/g ${venueTag(v.homePpg)}</div>
+        <div><span>Last 10 away</span>${recordStr(v.away)} · ${v.awayPpg.toFixed(2)} pts/g ${venueTag(v.awayPpg)}</div>
+        ${v.splitKnown ? "" : `<div class="muted small">No match-by-match data for this league — venue form uses this season's Champions League games only.</div>`}
       </div>
       <p class="blurb">${t.blurb}</p>
       <div class="fixtures-strip"><span class="muted small">Remaining:</span> ${remaining}</div>
@@ -255,7 +279,7 @@ function renderMethod() {
     <p>Domestic numbers are discounted by league. Bodø/Glimt's 2.4 points per game in Norway is a great season, but not the same as 2.4 in the Premier League.</p>
     <table class="mini-table"><thead><tr><th class="left">League</th><th>Strength</th></tr></thead><tbody>${lgRows}</tbody></table>
     <h3>3. Home and away</h3>
-    <p>Every league-phase game has a home team. Baseline: the home side's expected goals ×1.10, the away side's ×0.91. On top of that, each team's own record: the last (up to) 10 home and 10 away games we have, which means this season's domestic home/away split plus Champions League games. That record is shrunk toward the team's overall points per game, so a two-game sample can't swing a prediction. A team that's much better at home than overall gets up to +10% more xG at home, and the same logic applies away.</p>
+    <p>Every league-phase game has a home team. Baseline: the home side's expected goals ×1.10, the away side's ×0.91. On top of that, each team's own record: its last 10 competitive home games and last 10 away games (league and European games; cups and friendlies are left out, since they're often against much weaker teams). The model compares each venue to the team's average across all 20, so a team that wins everywhere gets no extra boost, while a home fortress with a poor away record does. Records are shrunk with 4 average games so one odd result can't swing a prediction. The effect is capped at ±10% xG.</p>
     <h3>4. From ratings to scorelines</h3>
     <ul>
       <li>Attack × defence Poisson model: a 38-point rating gap multiplies the xG ratio by e (~2.7).</li>
@@ -268,7 +292,9 @@ function renderMethod() {
     <h3>Format reminder</h3>
     <p>36 teams, 8 games each (4 home, 4 away). 1-8 go straight to the round of 16, 9-24 play two-legged play-offs in February, and 25-36 are out. The knockout bracket starts in February 2027 and will be added once the league phase ends.</p>
     <h3>Data caveats</h3>
-    <p>Gathered via web search on ${SNAPSHOT_DATE}. Champions League results are cross-checked: the table matches published standings. Some domestic numbers (goals for/against for a few clubs, the Slovak and Azerbaijani tables, the 2025-26 finals in the Netherlands, Belgium, Greece, Austria, Ukraine and Norway) are approximate. Domestic home/away splits were found only for most English, Spanish and Italian clubs plus Bayern and Dortmund. For the rest, venue form comes from Champions League games alone (and is heavily shrunk).</p>`;
+    <p>Updated ${SNAPSHOT_DATE}. The Champions League table matches ESPN's official standings. Domestic tables, the last two seasons' final tables and every team's last-10 home/away games come from ESPN. ESPN doesn't cover the Czech, Ukrainian, Slovak and Azerbaijani leagues, so Slavia, Shakhtar, Slovan and Sabah keep their October 26 domestic numbers, and their venue form uses Champions League games only. In Belgium, Greece and Austria, points are split after the regular season, so last season's points per game there is approximate.</p>
+    <h3>Scorecard</h3>
+    <p>From Matchday 4 on, the model's headline pick is saved before kickoff, so the Matches tab shows a real scorecard: 3 points for an exact score, 1 for the right result.</p>`;
 }
 
 // ---------------------------------------------------------------------------

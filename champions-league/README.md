@@ -2,7 +2,7 @@
 
 The World Cup 2026 dashboard's model, rebuilt for clubs and the 36-team league phase.
 
-**Snapshot date:** October 26, 2026, after Matchday 3.
+**Snapshot date:** November 12, 2026, after Matchday 4. Data from ESPN (tables, results, last-10 home/away games).
 
 ## Features
 
