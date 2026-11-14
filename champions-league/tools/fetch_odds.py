@@ -4,7 +4,7 @@ them into data.js.
 
 365Scores shows Winner's prices (bookmaker 1 for Israeli users) once Winner
 opens a market, usually a few days before kickoff. Only games kicking off
-in the next 48 hours are updated: further out it does nothing, games without
+in the next 4 days are updated: further out it does nothing, games without
 a market yet are left alone, and games already played are never touched. Run
 it as often as you like: it only rewrites a line when the prices changed.
 
@@ -23,7 +23,7 @@ URL = ("https://webws.365scores.com/web/games/fixtures/"
        "&competitions=572&showOdds=true")
 WINNER = 1   # 365Scores bookmaker id for Winner
 MATCH_RESULT = 1  # line type: 1 / X / 2
-WINDOW_HOURS = 48  # only touch games kicking off within this window
+WINDOW_HOURS = 96  # only touch games kicking off within this window (Sunday night covers Tue + Wed)
 
 # 365Scores competitor id -> team name used in data.js
 TEAM_IDS = {
