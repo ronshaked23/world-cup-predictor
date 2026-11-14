@@ -22,7 +22,15 @@ function badge(name, size) {
   return `<span class="badge ${size || ""}" style="background:${t.color};color:${light ? "#111" : "#fff"}">${t.short}</span>`;
 }
 
-function teamLabel(name) { return `${badge(name)}<span class="tname">${name}</span>`; }
+// Club crest (crests/<espn id>.png, from ESPN); if it can't load, the coloured badge takes its place.
+function crest(name, size) {
+  const t = TEAMS[name];
+  if (!t.espn) return badge(name, size);
+  return `<span class="crest-wrap ${size || ""}"><img class="crest" src="crests/${t.espn}.png" alt="" loading="lazy"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'">${badge(name, size).replace('class="badge', 'class="badge fallback')}</span>`;
+}
+
+function teamLabel(name) { return `${crest(name)}<span class="tname">${name}</span>`; }
 
 function nextMatchday() {
   const up = upcomingMatches();
@@ -176,9 +184,9 @@ function predictionCard(m) {
   const sh = SIM[m.h], sa = SIM[m.a];
   return `<div class="pred-card">
     <div class="pred-head">
-      <div class="pred-team">${badge(m.h, "lg")}<div><div class="pt-name">${m.h}</div><div class="pt-sub">${leagueFlag(m.h)} ${rh.rating.toFixed(1)} · ${STYLES[TEAMS[m.h].style].label}</div></div></div>
+      <div class="pred-team">${crest(m.h, "lg")}<div><div class="pt-name">${m.h}</div><div class="pt-sub">${leagueFlag(m.h)} ${rh.rating.toFixed(1)} · ${STYLES[TEAMS[m.h].style].label}</div></div></div>
       <div class="pred-score"><div class="ps-main">${p.pick.a} – ${p.pick.b}</div><div class="ps-sub">xG ${p.xgH.toFixed(2)} – ${p.xgA.toFixed(2)}</div></div>
-      <div class="pred-team away"><div><div class="pt-name">${m.a}</div><div class="pt-sub">${ra.rating.toFixed(1)} · ${STYLES[TEAMS[m.a].style].label} ${leagueFlag(m.a)}</div></div>${badge(m.a, "lg")}</div>
+      <div class="pred-team away"><div><div class="pt-name">${m.a}</div><div class="pt-sub">${ra.rating.toFixed(1)} · ${STYLES[TEAMS[m.a].style].label} ${leagueFlag(m.a)}</div></div>${crest(m.a, "lg")}</div>
     </div>
     ${probBar(p)}
     <div class="pred-legend"><span>${m.h} win</span><span>Draw</span><span>${m.a} win</span></div>
@@ -243,8 +251,9 @@ function fixtureRow(m) {
   return `<details class="fx-item" data-id="${oddsKey(m)}">
     <summary class="fx-sum">
       <span class="fx-when">${(m.day || "").replace(/^\w+ /, "")}</span>
-      <span class="fx-teams"><span class="fx-t">${teamLabel(m.h)}</span><span class="fx-t">${teamLabel(m.a)}</span></span>
+      <span class="fx-side fx-home"><span class="fx-name">${m.h}</span>${crest(m.h, "md")}</span>
       <span class="fx-odds">${cells}</span>
+      <span class="fx-side fx-away">${crest(m.a, "md")}<span class="fx-name">${m.a}</span></span>
       <span class="fx-reco">${recoTag}</span>
     </summary>
     ${oddsPanel(m, rec)}
@@ -343,7 +352,7 @@ function upcomingList(upcoming) {
       return `<p class="empty-note">No recommended games yet. ${upcoming.some(m => oddsFor(m)) ? "None of the games with odds pass the filter (odds ≥ " + MIN_ODDS + " and positive value)." : "Enter Winner odds in a game's card, or send them over to be added to the data."}</p>`;
     }
   }
-  return `<div class="fx-head"><span></span><span></span><span class="fx-odds-head"><span>1</span><span>X</span><span>2</span></span><span></span></div>
+  return `<div class="fx-head"><span></span><span class="fx-home">Home</span><span class="fx-odds-head"><span>1</span><span>X</span><span>2</span></span><span class="fx-away">Away</span><span></span></div>
     <div class="fx-list">${list.map(fixtureRow).join("")}</div>
     <p class="disclaimer small">Tap a game to open the full prediction. Under each price: our model's probability. ★ = the outcome we rate most likely, priced at ${MIN_ODDS}+ with an expected return of at least ${Math.round(MIN_EDGE * 100)}%. Not betting advice.</p>`;
 }
@@ -388,7 +397,7 @@ function renderTeams() {
     const lastUcl = t.last.ucl ? ` · CL: ${{ W: "winners", F: "finalists", SF: "semi-finals", QF: "quarter-finals" }[t.last.ucl]}` : "";
     return `<div class="team-card">
       <div class="team-card-header">
-        ${badge(name, "lg")}
+        ${crest(name, "lg")}
         <div><div class="team-name">${name}</div><div class="team-sub">${leagueFlag(name)} ${lg.name} · league strength ${lg.coef.toFixed(2)}</div></div>
         <div class="overall"><div class="ov-n">${r.rating.toFixed(1)}</div><div class="ov-r">#${rankOf[name]}</div></div>
       </div>

@@ -264,3 +264,34 @@ code { background: var(--bg-card-2); padding: 1px 5px; border-radius: 3px; }
   .fx-reco { grid-area: reco; }
   .odd-lab { display: block; font-size: 0.6rem; color: var(--muted); }
 }
+
+/* club crests */
+.crest-wrap { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-right: 6px; vertical-align: middle; flex: none; }
+.crest-wrap.md { width: 30px; height: 30px; margin: 0; }
+.crest-wrap.lg { width: 44px; height: 44px; margin: 0; }
+.crest { width: 100%; height: 100%; object-fit: contain; }
+.crest-wrap .badge.fallback { display: none; margin: 0; }
+
+/* fixture rows: home | odds | away */
+.fx-head, .fx-sum { grid-template-columns: 60px minmax(0, 1fr) 186px minmax(0, 1fr) 170px; }
+.fx-head .fx-home { text-align: right; }
+.fx-head .fx-away { text-align: left; }
+.fx-side { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 0.9rem; font-weight: 600; }
+.fx-home { justify-content: flex-end; text-align: right; }
+.fx-away { justify-content: flex-start; }
+.fx-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+@media (max-width: 640px) {
+  .fx-head { display: grid; grid-template-columns: minmax(0, 1fr) 138px minmax(0, 1fr); padding: 0 8px 4px; }
+  .fx-head > span:first-child, .fx-head > span:last-child { display: none; }
+  .fx-sum { grid-template-columns: minmax(0, 1fr) 138px minmax(0, 1fr); grid-template-areas: "home odds away" "when when reco"; padding: 10px 8px; gap: 6px 8px; }
+  .fx-sum .fx-home { grid-area: home; flex-direction: column-reverse; justify-content: center; text-align: center; gap: 4px; }
+  .fx-sum .fx-away { grid-area: away; flex-direction: column; justify-content: center; text-align: center; gap: 4px; }
+  .fx-head .fx-home, .fx-head .fx-away { text-align: center; }
+  .fx-side { font-size: 0.76rem; }
+  .fx-name { white-space: normal; overflow-wrap: anywhere; }
+  .fx-odds { grid-area: odds; gap: 3px; }
+  .fx-when { grid-area: when; }
+  .fx-reco { grid-area: reco; }
+  .fx-reco .tag { white-space: normal; display: inline-block; }
+}
