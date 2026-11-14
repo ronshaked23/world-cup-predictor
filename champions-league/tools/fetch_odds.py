@@ -3,9 +3,10 @@
 them into data.js.
 
 365Scores shows Winner's prices (bookmaker 1 for Israeli users) once Winner
-opens a market, usually a few days before kickoff. Games without a market
-yet are left alone; games already played are never touched. Run it as often
-as you like: it only rewrites a line when the prices changed.
+opens a market, usually a few days before kickoff. Only games kicking off
+in the next 48 hours are updated: further out it does nothing, games without
+a market yet are left alone, and games already played are never touched. Run
+it as often as you like: it only rewrites a line when the prices changed.
 
     python3 champions-league/tools/fetch_odds.py
 """
@@ -22,6 +23,7 @@ URL = ("https://webws.365scores.com/web/games/fixtures/"
        "&competitions=572&showOdds=true")
 WINNER = 1   # 365Scores bookmaker id for Winner
 MATCH_RESULT = 1  # line type: 1 / X / 2
+WINDOW_HOURS = 48  # only touch games kicking off within this window
 
 # 365Scores competitor id -> team name used in data.js
 TEAM_IDS = {
@@ -39,8 +41,13 @@ TEAM_IDS = {
 def fetch_odds():
     with urllib.request.urlopen(URL, timeout=30) as resp:
         games = json.load(resp).get("games", [])
+    now = datetime.datetime.now(datetime.timezone.utc)
+    soon = [g for g in games
+            if now <= datetime.datetime.fromisoformat(g["startTime"]) <= now + datetime.timedelta(hours=WINDOW_HOURS)]
+    if not soon:
+        print(f"No Champions League game in the next {WINDOW_HOURS} hours; nothing to do.")
     found = {}
-    for g in games:
+    for g in soon:
         line = g.get("odds")
         if not line or line.get("bookmakerId") != WINNER or line.get("lineTypeId") != MATCH_RESULT:
             continue
