@@ -1,0 +1,43 @@
+name: Winner odds
+
+# Once a week, Sunday night (22:17 Israel winter time = 20:17 UTC): pull
+# Winner's 1/X/2 prices (via 365Scores) for Champions League games in the
+# next 4 days — the Tuesday and Wednesday games — into
+# champions-league/data.js, commit if anything changed, and rebuild the
+# GitHub Pages site. In weeks without games a run ends in seconds.
+on:
+  schedule:
+    - cron: "17 20 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: winner-odds
+  cancel-in-progress: false
+
+jobs:
+  odds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Winner odds
+        run: python3 champions-league/tools/fetch_odds.py
+
+      - name: Commit and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then
+            echo "No new odds."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Winner odds update $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push
+          # pushes made with the workflow token don't start a Pages build on their own
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "Pages build request failed; it will rebuild on the next push."
