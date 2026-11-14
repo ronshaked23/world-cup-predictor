@@ -257,6 +257,9 @@ const NEWS = {
 };
 
 // League phase. md = matchday. Scores null = not played yet.
+// odds = Winner's decimal 1 / X / 2 prices, e.g. odds: [1.85, 3.60, 4.20],
+// with oddsDate: "Nov 23" — feeds the "Winner recommendations" filter.
+// (Viewers can also type odds into a game's card; those stay in their browser.)
 // pred = the pure model's headline pick, stored BEFORE kickoff (live pick,
 // used for the scorecard). predNews = the pick after the pre-match NEWS check,
 // also stored before kickoff, so the two can be compared. MD1-3 were played before the model existed, so they have none.

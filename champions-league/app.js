@@ -193,10 +193,115 @@ function predictionCard(m) {
   </div>`;
 }
 
-function renderMatches() {
+// ---------------------------------------------------------------------------
+// WINNER ODDS + RECOMMENDATIONS
+// Odds come from data.js (m.odds = [1, X, 2], Winner's decimal odds) or from
+// the viewer's own entry in the expanded card, kept in this browser only.
+// A match is recommended when the outcome our model rates most likely is also
+// a value bet at Winner's price: odds of at least MIN_ODDS (shorter prices
+// aren't worth it) and model probability × odds ≥ 1 + MIN_EDGE.
+// ---------------------------------------------------------------------------
+const MIN_ODDS = 1.4;
+const MIN_EDGE = 0.03;
+const OUTCOMES = ["1", "X", "2"];
+let recoOnly = false;
+
+function oddsKey(m) { return `odds:${m.md}:${m.h}:${m.a}`; }
+function localOdds(m) {
+  try { const v = JSON.parse(localStorage.getItem(oddsKey(m))); return Array.isArray(v) && v.length === 3 ? v : null; }
+  catch (e) { return null; }
+}
+function oddsFor(m) { return localOdds(m) || m.odds || null; }
+
+function recommendation(m) {
+  const o = oddsFor(m);
+  if (!o) return null;
+  const p = predictMatch(m.h, m.a, m.md);
+  const probs = [p.pH, p.pD, p.pA];
+  const i = probs.indexOf(Math.max(...probs));
+  const odds = o[i], prob = probs[i], ev = prob * odds - 1;
+  return {
+    i, label: OUTCOMES[i], odds, prob, ev, fair: 1 / prob,
+    ok: odds >= MIN_ODDS && ev >= MIN_EDGE,
+    why: odds < MIN_ODDS ? `odds ${odds.toFixed(2)} below ${MIN_ODDS}` : ev < MIN_EDGE ? `no value: fair odds ${(1 / prob).toFixed(2)}` : "",
+  };
+}
+
+function outcomeName(m, i) { return i === 0 ? m.h : i === 2 ? m.a : "Draw"; }
+
+function fixtureRow(m) {
+  const p = predictMatch(m.h, m.a, m.md);
+  const o = oddsFor(m), rec = recommendation(m);
+  const probs = [p.pH, p.pD, p.pA];
+  const cells = OUTCOMES.map((lab, i) => {
+    const hot = rec && rec.ok && rec.i === i;
+    return `<span class="odd ${hot ? "odd-reco" : ""}"><span class="odd-lab">${lab}</span><span class="odd-val">${o ? o[i].toFixed(2) : "–"}</span><span class="odd-p">${pct(probs[i])}</span></span>`;
+  }).join("");
+  const recoTag = rec && rec.ok
+    ? `<span class="tag tag-exact">★ ${outcomeName(m, rec.i)} @ ${rec.odds.toFixed(2)} · ${signed(rec.ev * 100)}%</span>`
+    : (o ? "" : `<span class="tag tag-muted">no odds</span>`);
+  return `<details class="fx-item" data-id="${oddsKey(m)}">
+    <summary class="fx-sum">
+      <span class="fx-when">${(m.day || "").replace(/^\w+ /, "")}</span>
+      <span class="fx-teams"><span class="fx-t">${teamLabel(m.h)}</span><span class="fx-t">${teamLabel(m.a)}</span></span>
+      <span class="fx-odds">${cells}</span>
+      <span class="fx-reco">${recoTag}</span>
+    </summary>
+    ${oddsPanel(m, rec)}
+    ${predictionCard(m)}
+  </details>`;
+}
+
+function oddsPanel(m, rec) {
+  const o = oddsFor(m) || ["", "", ""];
+  const src = localOdds(m) ? "your entry (this browser)" : m.odds ? `Winner${m.oddsDate ? ", " + m.oddsDate : ""}` : "not entered yet";
+  const inputs = OUTCOMES.map((lab, i) =>
+    `<label class="odd-in">${lab}<input id="${("odds" + m.md + m.h + m.a + i).replace(/\W/g, "")}" type="number" step="0.01" min="1.01" inputmode="decimal" value="${o[i] === "" ? "" : Number(o[i]).toFixed(2)}" data-i="${i}"></label>`).join("");
+  const verdict = rec
+    ? (rec.ok
+      ? `<strong>Recommended:</strong> ${outcomeName(m, rec.i)} at ${rec.odds.toFixed(2)}. We give it ${pct(rec.prob)} (fair odds ${rec.fair.toFixed(2)}), so the expected return is ${signed(rec.ev * 100)}%.`
+      : `Not recommended — our pick is ${outcomeName(m, rec.i)} (${pct(rec.prob)}), but ${rec.why}.`)
+    : "Enter Winner's 1 / X / 2 odds to see whether this match is worth a bet.";
+  return `<div class="odds-panel" data-key="${oddsKey(m)}">
+    <div class="op-row"><span class="op-title">Winner odds</span><span class="muted small">source: ${src}</span></div>
+    <div class="op-row op-inputs">${inputs}${localOdds(m) ? `<button type="button" class="op-reset">Reset</button>` : ""}</div>
+    <p class="op-verdict">${verdict}</p>
+  </div>`;
+}
+
+function renderMatchFilters(upcoming) {
+  const el = document.getElementById("match-filters");
+  if (!upcoming.length) { el.innerHTML = ""; return; }
+  const n = upcoming.filter(m => { const r = recommendation(m); return r && r.ok; }).length;
+  const withOdds = upcoming.filter(m => oddsFor(m)).length;
+  el.innerHTML = `<button type="button" class="filter-btn ${recoOnly ? "active" : ""}" id="reco-toggle">★ Winner recommendations <strong>${n}</strong></button>
+    <span class="muted small">${withOdds}/${upcoming.length} games have odds · min odds ${MIN_ODDS} · value ≥ ${Math.round(MIN_EDGE * 100)}%</span>`;
+  document.getElementById("reco-toggle").addEventListener("click", () => { recoOnly = !recoOnly; renderMatches(); });
+}
+
+function wireOddsInputs() {
+  document.querySelectorAll(".odds-panel").forEach(panel => {
+    const key = panel.dataset.key;
+    panel.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+      const vals = [...panel.querySelectorAll("input")].map(x => parseFloat(x.value));
+      if (vals.every(v => v > 1)) {
+        try { localStorage.setItem(key, JSON.stringify(vals)); } catch (e) { /* storage blocked: keep page usable */ }
+        renderMatches(key);
+      }
+    }));
+    const reset = panel.querySelector(".op-reset");
+    if (reset) reset.addEventListener("click", () => {
+      try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+      renderMatches(key);
+    });
+  });
+}
+
+function renderMatches(keepOpen) {
   const ms = MATCHES.filter(m => m.md === currentMd);
   const played = ms.filter(m => m.hs != null);
   const upcoming = ms.filter(m => m.hs == null);
+  renderMatchFilters(upcoming);
   let summary = "";
   if (played.length) {
     const goals = played.reduce((s, m) => s + m.hs + m.as, 0);
@@ -219,7 +324,28 @@ function renderMatches() {
   document.getElementById("matches-list").innerHTML =
     (played.length ? `<div class="results-list">${played.map(resultRow).join("")}</div>
       <p class="disclaimer small">${played.some(m => m.pred) ? "Picks were stored before kickoff, so this is a real scorecard." : "No picks were stored for this matchday (the model didn't exist yet). \"Upset\" = a result today's model gives under 25% — a hindsight view, since today's ratings include these games."}</p>` : "") +
-    upcoming.map(predictionCard).join("");
+    upcomingList(upcoming);
+  if (keepOpen) {
+    document.querySelectorAll("#matches-list details").forEach(d => {
+      if (d.dataset.id === keepOpen) d.open = true;
+    });
+  }
+  wireOddsInputs();
+}
+
+function upcomingList(upcoming) {
+  if (!upcoming.length) return "";
+  let list = upcoming;
+  if (recoOnly) {
+    list = upcoming.filter(m => { const r = recommendation(m); return r && r.ok; })
+      .sort((a, b) => recommendation(b).ev - recommendation(a).ev);
+    if (!list.length) {
+      return `<p class="empty-note">No recommended games yet. ${upcoming.some(m => oddsFor(m)) ? "None of the games with odds pass the filter (odds ≥ " + MIN_ODDS + " and positive value)." : "Enter Winner odds in a game's card, or send them over to be added to the data."}</p>`;
+    }
+  }
+  return `<div class="fx-head"><span></span><span></span><span class="fx-odds-head"><span>1</span><span>X</span><span>2</span></span><span></span></div>
+    <div class="fx-list">${list.map(fixtureRow).join("")}</div>
+    <p class="disclaimer small">Tap a game to open the full prediction. Under each price: our model's probability. ★ = the outcome we rate most likely, priced at ${MIN_ODDS}+ with an expected return of at least ${Math.round(MIN_EDGE * 100)}%. Not betting advice.</p>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -328,7 +454,9 @@ function renderMethod() {
     </ul>
     <h3>5. Team news</h3>
     <p>The day before each matchday the injury, suspension and lineup news is checked and entered as a rating shift for the affected team: roughly −1 to −2 for a key starter out, −3 to −5 for several, and up to +2 when a key player returns. A shift can hit attack and defence separately: a missing striker lowers the team's attack, a missing centre-back weakens its defence. The prediction card shows each item and what the model said without it. Both picks are stored before kickoff, so the scorecard shows whether the news check actually improves the predictions.</p>
-    <h3>6. Simulation</h3>
+    <h3>6. Winner recommendations</h3>
+    <p>Each upcoming game opens collapsed with Winner's 1 / X / 2 prices and, under each price, our model's probability. A game is recommended when the outcome we rate most likely is also good value at Winner's price: the price is at least ${MIN_ODDS} (shorter prices aren't worth the risk) and our probability × the price is at least ${(1 + MIN_EDGE).toFixed(2)}, an expected return of +${Math.round(MIN_EDGE * 100)}% or more. Winner builds a margin into every price, so most games won't pass, and that's the point. The filter at the top of the Matches tab shows only the games that do, best value first.</p>
+    <h3>7. Simulation</h3>
     <p>Every remaining league-phase fixture is played ${SIMS.toLocaleString()} times by sampling a scoreline from its probability grid. Teams are then ranked with UEFA's tiebreakers (points, goal difference, goals scored, away goals, wins, away wins).</p>
     <h3>Format reminder</h3>
     <p>36 teams, 8 games each (4 home, 4 away). 1-8 go straight to the round of 16, 9-24 play two-legged play-offs in February, and 25-36 are out. The knockout bracket starts in February 2027 and will be added once the league phase ends.</p>
