@@ -205,12 +205,18 @@ function predictionCard(m) {
 // WINNER ODDS + RECOMMENDATIONS
 // Odds come from data.js (m.odds = [1, X, 2], Winner's decimal odds) or from
 // the viewer's own entry in the expanded card, kept in this browser only.
-// A match is recommended when the outcome our model rates most likely is also
-// a value bet at Winner's price: odds of at least MIN_ODDS (shorter prices
-// aren't worth it) and model probability × odds ≥ 1 + MIN_EDGE.
+// Each game's best bet is the outcome with the highest expected return
+// (model probability × Winner's price − 1) among prices of at least MIN_ODDS
+// that we rate at least MIN_PROB — shorter prices aren't worth it, longer
+// shots are too swingy. Every day gets every value bet (expected return ≥
+// MIN_EDGE), topped up with the next-best games so there are at least
+// PER_DAY picks; those top-ups are marked "lean" and show their (possibly
+// negative) expected return.
 // ---------------------------------------------------------------------------
 const MIN_ODDS = 1.4;
 const MIN_EDGE = 0.03;
+const MIN_PROB = 0.33;
+const PER_DAY = 3;
 const OUTCOMES = ["1", "X", "2"];
 let recoOnly = false;
 
@@ -226,27 +232,46 @@ function recommendation(m) {
   if (!o) return null;
   const p = predictMatch(m.h, m.a, m.md);
   const probs = [p.pH, p.pD, p.pA];
-  const i = probs.indexOf(Math.max(...probs));
-  const odds = o[i], prob = probs[i], ev = prob * odds - 1;
-  return {
-    i, label: OUTCOMES[i], odds, prob, ev, fair: 1 / prob,
-    ok: odds >= MIN_ODDS && ev >= MIN_EDGE,
-    why: odds < MIN_ODDS ? `odds ${odds.toFixed(2)} below ${MIN_ODDS}` : ev < MIN_EDGE ? `no value: fair odds ${(1 / prob).toFixed(2)}` : "",
-  };
+  const bet = i => ({ i, label: OUTCOMES[i], odds: o[i], prob: probs[i], ev: probs[i] * o[i] - 1, fair: 1 / probs[i] });
+  const options = [0, 1, 2].filter(i => o[i] >= MIN_ODDS && probs[i] >= MIN_PROB).map(bet).sort((a, b) => b.ev - a.ev);
+  if (!options.length) {
+    const fav = bet(probs.indexOf(Math.max(...probs)));
+    return { ...fav, eligible: false, value: false,
+      why: fav.odds < MIN_ODDS ? `the likely outcome is priced ${fav.odds.toFixed(2)}, below ${MIN_ODDS}` : `nothing we rate ${Math.round(MIN_PROB * 100)}%+ is priced at ${MIN_ODDS}+` };
+  }
+  return { ...options[0], eligible: true, value: options[0].ev >= MIN_EDGE };
 }
+
+function dayOf(m) { return m.day || ""; }
+
+// The picks for a list of games: per day, all value bets plus the best
+// remaining games until there are PER_DAY. Map of oddsKey -> recommendation.
+function dayPicks(games) {
+  const picks = new Map();
+  [...new Set(games.map(dayOf))].forEach(day => {
+    games.filter(m => dayOf(m) === day)
+      .map(m => ({ m, r: recommendation(m) }))
+      .filter(x => x.r && x.r.eligible)
+      .sort((a, b) => b.r.ev - a.r.ev)
+      .forEach((x, k) => { if (x.r.value || k < PER_DAY) picks.set(oddsKey(x.m), { ...x.r, tier: x.r.value ? "value" : "lean" }); });
+  });
+  return picks;
+}
+
+let PICKS = new Map();
 
 function outcomeName(m, i) { return i === 0 ? m.h : i === 2 ? m.a : "Draw"; }
 
 function fixtureRow(m) {
   const p = predictMatch(m.h, m.a, m.md);
-  const o = oddsFor(m), rec = recommendation(m);
+  const o = oddsFor(m), rec = recommendation(m), pick = PICKS.get(oddsKey(m));
   const probs = [p.pH, p.pD, p.pA];
   const cells = OUTCOMES.map((lab, i) => {
-    const hot = rec && rec.ok && rec.i === i;
-    return `<span class="odd ${hot ? "odd-reco" : ""}"><span class="odd-lab">${lab}</span><span class="odd-val">${o ? o[i].toFixed(2) : "–"}</span><span class="odd-p">${pct(probs[i])}</span></span>`;
+    const hot = pick && pick.i === i ? (pick.tier === "value" ? "odd-reco" : "odd-lean") : "";
+    return `<span class="odd ${hot}"><span class="odd-lab">${lab}</span><span class="odd-val">${o ? o[i].toFixed(2) : "–"}</span><span class="odd-p">${pct(probs[i])}</span></span>`;
   }).join("");
-  const recoTag = rec && rec.ok
-    ? `<span class="tag tag-exact">★ ${outcomeName(m, rec.i)} @ ${rec.odds.toFixed(2)} · ${signed(rec.ev * 100)}%</span>`
+  const recoTag = pick
+    ? `<span class="tag ${pick.tier === "value" ? "tag-exact" : "tag-lean"}">${pick.tier === "value" ? "★" : "◆"} ${outcomeName(m, pick.i)} @ ${pick.odds.toFixed(2)} · ${signed(pick.ev * 100)}%</span>`
     : (o ? "" : `<span class="tag tag-muted">no odds</span>`);
   return `<details class="fx-item" data-id="${oddsKey(m)}">
     <summary class="fx-sum">
@@ -266,11 +291,13 @@ function oddsPanel(m, rec) {
   const src = localOdds(m) ? "your entry (this browser)" : m.odds ? `Winner${m.oddsDate ? ", " + m.oddsDate : ""}` : "not entered yet";
   const inputs = OUTCOMES.map((lab, i) =>
     `<label class="odd-in">${lab}<input id="${("odds" + m.md + m.h + m.a + i).replace(/\W/g, "")}" type="number" step="0.01" min="1.01" inputmode="decimal" value="${o[i] === "" ? "" : Number(o[i]).toFixed(2)}" data-i="${i}"></label>`).join("");
-  const verdict = rec
-    ? (rec.ok
-      ? `<strong>Recommended:</strong> ${outcomeName(m, rec.i)} at ${rec.odds.toFixed(2)}. We give it ${pct(rec.prob)} (fair odds ${rec.fair.toFixed(2)}), so the expected return is ${signed(rec.ev * 100)}%.`
-      : `Not recommended — our pick is ${outcomeName(m, rec.i)} (${pct(rec.prob)}), but ${rec.why}.`)
-    : "Enter Winner's 1 / X / 2 odds to see whether this match is worth a bet.";
+  const pick = PICKS.get(oddsKey(m));
+  const about = r => `${outcomeName(m, r.i)} at ${r.odds.toFixed(2)}. We give it ${pct(r.prob)} (fair odds ${r.fair.toFixed(2)}), so the expected return is ${signed(r.ev * 100)}%`;
+  const verdict = !rec ? "Enter Winner's 1 / X / 2 odds to see whether this match is worth a bet."
+    : pick && pick.tier === "value" ? `<strong>★ Value pick:</strong> ${about(pick)}.`
+    : pick ? `<strong>◆ Lean</strong> (one of the day's best ${PER_DAY}, but no clear value): ${about(pick)}.`
+    : rec.eligible ? `Not picked: best option is ${about(rec)} — other games that day are better.`
+    : `Not picked: ${rec.why}.`;
   return `<div class="odds-panel" data-key="${oddsKey(m)}">
     <div class="op-row"><span class="op-title">Winner odds</span><span class="muted small">source: ${src}</span></div>
     <div class="op-row op-inputs">${inputs}${localOdds(m) ? `<button type="button" class="op-reset">Reset</button>` : ""}</div>
@@ -281,10 +308,11 @@ function oddsPanel(m, rec) {
 function renderMatchFilters(upcoming) {
   const el = document.getElementById("match-filters");
   if (!upcoming.length) { el.innerHTML = ""; return; }
-  const n = upcoming.filter(m => { const r = recommendation(m); return r && r.ok; }).length;
+  const picks = [...PICKS.values()];
+  const nValue = picks.filter(x => x.tier === "value").length;
   const withOdds = upcoming.filter(m => oddsFor(m)).length;
-  el.innerHTML = `<button type="button" class="filter-btn ${recoOnly ? "active" : ""}" id="reco-toggle">★ Winner recommendations <strong>${n}</strong></button>
-    <span class="muted small">${withOdds}/${upcoming.length} games have odds · min odds ${MIN_ODDS} · value ≥ ${Math.round(MIN_EDGE * 100)}%</span>`;
+  el.innerHTML = `<button type="button" class="filter-btn ${recoOnly ? "active" : ""}" id="reco-toggle">★ Winner recommendations <strong>${picks.length}</strong></button>
+    <span class="muted small">${nValue} value · ${picks.length - nValue} lean · ${withOdds}/${upcoming.length} games have odds · at least ${PER_DAY} per day</span>`;
   document.getElementById("reco-toggle").addEventListener("click", () => { recoOnly = !recoOnly; renderMatches(); });
 }
 
@@ -310,6 +338,7 @@ function renderMatches(keepOpen) {
   const ms = MATCHES.filter(m => m.md === currentMd);
   const played = ms.filter(m => m.hs != null);
   const upcoming = ms.filter(m => m.hs == null);
+  PICKS = dayPicks(upcoming);
   renderMatchFilters(upcoming);
   let summary = "";
   if (played.length) {
@@ -342,19 +371,31 @@ function renderMatches(keepOpen) {
   wireOddsInputs();
 }
 
+const DAY_NAMES = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+function dayLabel(day) {
+  const [d, ...rest] = day.split(" ");
+  return DAY_NAMES[d] ? `${DAY_NAMES[d]} · ${rest.join(" ")}` : day;
+}
+
 function upcomingList(upcoming) {
   if (!upcoming.length) return "";
   let list = upcoming;
   if (recoOnly) {
-    list = upcoming.filter(m => { const r = recommendation(m); return r && r.ok; })
-      .sort((a, b) => recommendation(b).ev - recommendation(a).ev);
+    list = upcoming.filter(m => PICKS.has(oddsKey(m)))
+      .sort((a, b) => PICKS.get(oddsKey(b)).ev - PICKS.get(oddsKey(a)).ev);
     if (!list.length) {
-      return `<p class="empty-note">No recommended games yet. ${upcoming.some(m => oddsFor(m)) ? "None of the games with odds pass the filter (odds ≥ " + MIN_ODDS + " and positive value)." : "Enter Winner odds in a game's card, or send them over to be added to the data."}</p>`;
+      return `<p class="empty-note">No recommended games yet. ${upcoming.some(m => oddsFor(m)) ? "None of the games with odds have an outcome we rate " + Math.round(MIN_PROB * 100) + "%+ priced at " + MIN_ODDS + "+." : "Winner's odds aren't in yet — they're added on Sunday night before each matchday."}</p>`;
     }
   }
+  const days = [...new Set(upcoming.map(dayOf))].filter(day => list.some(m => dayOf(m) === day)); // calendar order
+  const groups = days.map(day => {
+    const ms = list.filter(m => dayOf(m) === day);
+    const n = ms.filter(m => PICKS.has(oddsKey(m))).length;
+    return `<div class="fx-day">${day ? dayLabel(day) : "Date to be confirmed"}<span class="fx-day-n">${ms.length} games${n ? ` · ${n} picks` : ""}</span></div>${ms.map(fixtureRow).join("")}`;
+  }).join("");
   return `<div class="fx-head"><span></span><span class="fx-home">Home</span><span class="fx-odds-head"><span>1</span><span>X</span><span>2</span></span><span class="fx-away">Away</span><span></span></div>
-    <div class="fx-list">${list.map(fixtureRow).join("")}</div>
-    <p class="disclaimer small">Tap a game to open the full prediction. Under each price: our model's probability. ★ = the outcome we rate most likely, priced at ${MIN_ODDS}+ with an expected return of at least ${Math.round(MIN_EDGE * 100)}%. Not betting advice.</p>`;
+    <div class="fx-list">${groups}</div>
+    <p class="disclaimer small">Tap a game to open the full prediction. Under each price: our model's probability. ★ value pick = expected return of at least +${Math.round(MIN_EDGE * 100)}% at Winner's price. ◆ lean = among the day's best ${PER_DAY} but without clear value. Only outcomes we rate ${Math.round(MIN_PROB * 100)}%+ and priced ${MIN_ODDS}+ are considered. Not betting advice.</p>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -464,7 +505,7 @@ function renderMethod() {
     <h3>5. Team news</h3>
     <p>The day before each matchday the injury, suspension and lineup news is checked and entered as a rating shift for the affected team: roughly −1 to −2 for a key starter out, −3 to −5 for several, and up to +2 when a key player returns. A shift can hit attack and defence separately: a missing striker lowers the team's attack, a missing centre-back weakens its defence. The prediction card shows each item and what the model said without it. Both picks are stored before kickoff, so the scorecard shows whether the news check actually improves the predictions.</p>
     <h3>6. Winner recommendations</h3>
-    <p>Each upcoming game opens collapsed with Winner's 1 / X / 2 prices and, under each price, our model's probability. A game is recommended when the outcome we rate most likely is also good value at Winner's price: the price is at least ${MIN_ODDS} (shorter prices aren't worth the risk) and our probability × the price is at least ${(1 + MIN_EDGE).toFixed(2)}, an expected return of +${Math.round(MIN_EDGE * 100)}% or more. Winner builds a margin into every price, so most games won't pass, and that's the point. The filter at the top of the Matches tab shows only the games that do, best value first.</p>
+    <p>Each upcoming game opens collapsed with Winner's 1 / X / 2 prices and, under each price, our model's probability, grouped by matchday. For every game we look at the outcomes we rate at least ${Math.round(MIN_PROB * 100)}% that Winner prices at ${MIN_ODDS} or more, and take the one with the best expected return (our probability × the price − 1). A game is a <strong>★ value pick</strong> when that return is +${Math.round(MIN_EDGE * 100)}% or better. Winner builds a margin into every price, so value picks are rare; to give at least ${PER_DAY} picks per day, the next-best games are added as <strong>◆ leans</strong>. They're the closest to fair odds that day, but their expected return can be slightly negative, and it's shown on each one. The filter at the top of the Matches tab shows only the picks, best first.</p>
     <h3>7. Simulation</h3>
     <p>Every remaining league-phase fixture is played ${SIMS.toLocaleString()} times by sampling a scoreline from its probability grid. Teams are then ranked with UEFA's tiebreakers (points, goal difference, goals scored, away goals, wins, away wins).</p>
     <h3>Format reminder</h3>
