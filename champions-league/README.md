@@ -21,7 +21,7 @@ The World Cup 2026 dashboard's model, rebuilt for clubs and the 36-team league p
 | Momentum | Last two domestic seasons (70% 2025-26 / 30% 2024-25) × league strength, plus last season's Champions League run |
 | Form | This season: domestic results since mid-August × league strength, and Champions League results vs expectation |
 
-Predictions add home advantage (scaled by each team's own home/away record), the playstyle matchup table from the World Cup model, and a goals-environment factor.
+Predictions add home advantage (scaled by each team's own home/away record, split into league and European games and backtested: [`tools/backtest_venue.js`](tools/backtest_venue.js)), the playstyle matchup table from the World Cup model, and a goals-environment factor.
 
 ## Running it
 

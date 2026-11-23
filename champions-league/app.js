@@ -449,8 +449,8 @@ function renderTeams() {
       <div class="facts">
         <div><span>2025-26</span>${ordinal(t.last.pos)}, ${t.last.pts} pts in ${t.last.gp}${lastUcl}</div>
         <div><span>This season</span>${ordinal(d.pos)} in league · ${d.w}-${d.d}-${d.l}, ${d.gf}:${d.ga}${t.checked ? ` <span class="muted">(checked ${t.checked})</span>` : ""}</div>
-        <div><span>Last 10 home</span>${recordStr(v.home)} · ${v.homePpg.toFixed(2)} pts/g ${venueTag(v.homePpg)}</div>
-        <div><span>Last 10 away</span>${recordStr(v.away)} · ${v.awayPpg.toFixed(2)} pts/g ${venueTag(v.awayPpg)}</div>
+        <div class="vf-row"><span>Home</span><span><span class="rec">league ${recordStr(v.homeLeague)}</span> · <span class="rec">Europe ${recordStr(v.homeEurope)}</span></span>${venueEffect(v.homeEdge)}</div>
+        <div class="vf-row"><span>Away</span><span><span class="rec">league ${recordStr(v.awayLeague)}</span> · <span class="rec">Europe ${recordStr(v.awayEurope)}</span></span>${venueEffect(v.awayEdge)}</div>
         ${v.splitKnown ? "" : `<div class="muted small">No match-by-match data for this league — venue form uses this season's Champions League games only.</div>`}
       </div>
       <p class="blurb">${t.blurb}</p>
@@ -470,11 +470,11 @@ function teamNewsList(name) {
 }
 
 function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-// Shrunk points-per-game at a venue, on an absolute scale.
-function venueTag(ppg) {
-  if (ppg >= 2.2) return `<span class="tag tag-good">strong</span>`;
-  if (ppg <= 1.2) return `<span class="tag tag-bad">weak</span>`;
-  return "";
+// What the team's own home or away record does to its expected goals there.
+function venueEffect(edge) {
+  const pctv = Math.round((venueMul(edge) - 1) * 100);
+  const cls = pctv >= 4 ? "tag-good" : pctv <= -4 ? "tag-bad" : "tag-muted";
+  return `<span class="tag ${cls}" title="Effect on this team's expected goals at this venue">${pctv > 0 ? "+" : ""}${pctv}% xG</span>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -494,7 +494,8 @@ function renderMethod() {
     <p>Domestic numbers are discounted by league. Bodø/Glimt's 2.4 points per game in Norway is a great season, but not the same as 2.4 in the Premier League.</p>
     <table class="mini-table"><thead><tr><th class="left">League</th><th>Strength</th></tr></thead><tbody>${lgRows}</tbody></table>
     <h3>3. Home and away</h3>
-    <p>Every league-phase game has a home team. Baseline: the home side's expected goals ×1.10, the away side's ×0.91. On top of that, each team's own record: its last 10 competitive home games and last 10 away games (league and European games; cups and friendlies are left out, since they're often against much weaker teams). The model compares each venue to the team's average across all 20, so a team that wins everywhere gets no extra boost, while a home fortress with a poor away record does. Records are shrunk with 4 average games so one odd result can't swing a prediction. The effect is capped at ±10% xG.</p>
+    <p>Every league-phase game has a home team. Baseline: the home side's expected goals ×1.10, the away side's ×0.91 (a fixture at a neutral venue gets neither). On top of that comes each team's own record, split by competition: its last ${VENUE.league} league games and last ${VENUE.europe} European games at home, and the same away. Cups and friendlies are left out. European games count ${VENUE.euroWeight}×, because those opponents look like a Champions League opponent. Each venue is compared with the team's average across all of those games, in points per game plus half the goal difference per game. A team that wins everywhere gets no boost, but a home fortress with a poor away record gets a real swing: up to ±${Math.round(VENUE.cap * 100)}% on its expected goals. The team cards show the split and the effect.</p>
+    <p>The strength was set by a backtest on every league-phase game played so far, rebuilding each team's home/away form from the games before that matchday. With no team-specific effect the model scored 0.815 (log loss, lower is better); the old ±10% points-only version scored 0.811; this version scores 0.807. Pushing it to ±20% or ±25% made it worse (0.809, 0.813), because it starts chasing noise. To rerun it, use <code>tools/backtest_venue.js</code>.</p>
     <h3>4. From ratings to scorelines</h3>
     <ul>
       <li>Attack × defence Poisson model: a 38-point rating gap multiplies the xG ratio by e (~2.7).</li>

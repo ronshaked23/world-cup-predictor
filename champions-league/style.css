@@ -175,7 +175,7 @@ h3 { font-size: 1.02rem; margin: 22px 0 8px; color: var(--gold); }
 .rbar { height: 7px; background: var(--bg-card-2); border-radius: 4px; overflow: hidden; }
 .rbar > div { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
 .facts { margin-top: 10px; font-size: 0.78rem; display: grid; gap: 3px; }
-.facts span:first-child { display: inline-block; width: 92px; color: var(--muted); }
+.facts span:first-child { display: inline-block; width: 70px; color: var(--muted); }
 .blurb { font-size: 0.8rem; color: #c9d0ea; margin: 10px 0 8px; line-height: 1.4; }
 .fixtures-strip { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .fx { font-size: 0.68rem; font-weight: 800; padding: 2px 5px; border-radius: 4px; }
@@ -304,3 +304,8 @@ code { background: var(--bg-card-2); padding: 1px 5px; border-radius: 3px; }
 .tag-lean { background: rgba(224, 162, 11, 0.16); color: var(--amber); }
 .odd-lean { border-color: var(--amber); }
 .odd-lean .odd-val { color: var(--amber); }
+
+/* team card: home / away split with its xG effect */
+.facts .vf-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; align-items: baseline; gap: 6px; }
+.facts .vf-row span:first-child { width: auto; }
+.facts .rec { white-space: nowrap; }

@@ -27,6 +27,8 @@ DATA = pathlib.Path(__file__).resolve().parent.parent / "data.js"
 API = "https://webws.365scores.com"
 Q = "appTypeId=5&langId=1&timezoneName=Asia/Jerusalem&userCountryId=6"
 STALE_DAYS = 14  # a club with no game for this long gets flagged in the report
+HISTORY = 18     # competitive home and away games kept per team (enough to
+                 # rebuild venue form as of any matchday, for backtesting)
 
 
 def get(path):
@@ -58,10 +60,10 @@ def team_games(team_id):
                 "comp": g["competitionId"], "compName": names.get(g["competitionId"], ""),
             })
         comp = [x for x in games if is_competitive(x["comp"], x["compName"], league_id)]
-        enough = sum(x["home"] for x in comp) >= 10 and sum(not x["home"] for x in comp) >= 10
+        enough = sum(x["home"] for x in comp) >= HISTORY and sum(not x["home"] for x in comp) >= HISTORY
         prev = data.get("paging", {}).get("previousPage")
         pages += 1
-        if enough or not prev or pages >= 6:
+        if enough or not prev or pages >= 10:
             break
         data = get(prev)
     games.sort(key=lambda x: x["date"], reverse=True)
@@ -109,11 +111,17 @@ def main():
         ven = (f'venue10: {{ home: {hrec}, away: {arec}, homeGoals: {hgoals}, awayGoals: {agoals}, '
                f'since: ["{hsince}", "{asince}"] }},')
         chk = f'checked: "{stamp}", lastGame: "{last}",'
+        # every kept game: [date, home?, goals for, goals against, L(eague)/E(urope)]
+        kept = [g for g in games if g["home"]][:HISTORY] + [g for g in games if not g["home"]][:HISTORY]
+        kept.sort(key=lambda g: g["date"], reverse=True)
+        hist = ", ".join(f'["{g["date"]}", {int(g["home"])}, {g["gf"]}, {g["ga"]}, "{"L" if g["comp"] == league_id else "E"}"]' for g in kept)
+        vg = f"venueGames: [{hist}],"
         body = block.group(1)
         body = re.sub(r"    dom: \{[^\n]*\n", f"    {dom}\n", body)
         body = re.sub(r"    venue10: \{[^\n]*\n", "", body)
         body = re.sub(r"    checked: [^\n]*\n", "", body)
-        body += f"    {ven}\n    {chk}\n"
+        body = re.sub(r"    venueGames: [^\n]*\n", "", body)
+        body += f"    {ven}\n    {vg}\n    {chk}\n"
         src = src.replace(block.group(0), body + block.group(2), 1)
         age = (today - datetime.date.fromisoformat(last)).days
         report.append((age, name, last, pos, row))

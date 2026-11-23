@@ -120,41 +120,71 @@ function computeRatings() {
 }
 
 // ---------------------------------------------------------------------------
-// HOME / AWAY FORM — each team's last 10 competitive home games and last 10
-// away games (league + UEFA, from data.js venue10). The edge is how much
-// better the team does at that venue than across all 20 games — a team that
-// wins everything everywhere has no venue edge, a home fortress does.
-// Shrunk with 4 phantom games so one odd result can't swing a prediction.
-// Teams without venue10 fall back to this season's Champions League games.
+// HOME / AWAY FORM — from each team's recent competitive games (data.js
+// venueGames: [date, home?, goals for, goals against, L(eague) / E(urope)]).
+// At each venue we take the last VENUE.league league games and the last
+// VENUE.europe European games; European games count VENUE.euroWeight times,
+// since those opponents look like a Champions League opponent. The edge is
+// how much better the team does there than across all of those games, in
+// points per game plus VENUE.goalWeight × goal difference per game, shrunk
+// by VENUE.shrink weighted phantom games. A home fortress with a poor away
+// record gets a real swing (up to ±VENUE.cap on its expected goals); a team
+// that wins everywhere gets none. Settings were picked by the backtest in
+// tools/backtest_venue.js. Teams without venueGames fall back to this
+// season's Champions League games.
 // ---------------------------------------------------------------------------
-function computeVenueForm() {
-  const pts = r => 3 * r[0] + r[1];
-  const cnt = r => r[0] + r[1] + r[2];
-  for (const [name, t] of Object.entries(TEAMS)) {
-    let rec;
-    if (t.venue10) {
-      rec = { home: t.venue10.home, away: t.venue10.away };
-    } else {
-      rec = { home: [0, 0, 0], away: [0, 0, 0] };
-      playedMatches().forEach(m => {
-        if (m.h !== name && m.a !== name) return;
-        const home = m.h === name;
-        const gf = home ? m.hs : m.as, ga = home ? m.as : m.hs;
-        rec[home ? "home" : "away"][gf > ga ? 0 : gf === ga ? 1 : 2] += 1;
-      });
-    }
-    const n = cnt(rec.home) + cnt(rec.away);
-    const overall = n ? (pts(rec.home) + pts(rec.away)) / n : 1.4;
-    const K = 4;
-    const homePpg = (pts(rec.home) + K * overall) / (cnt(rec.home) + K);
-    const awayPpg = (pts(rec.away) + K * overall) / (cnt(rec.away) + K);
-    RATINGS[name].venue = {
-      home: rec.home, away: rec.away, overall,
-      homePpg, awayPpg,
-      homeEdge: homePpg - overall, awayEdge: awayPpg - overall,
-      splitKnown: !!t.venue10,
-    };
+const VENUE = { league: 10, europe: 6, euroWeight: 2, goalWeight: 0.5, shrink: 3, slope: 0.18, cap: 0.15 };
+
+function emptyRec() { return { w: 0, d: 0, l: 0, gf: 0, ga: 0 }; }
+function addGame(rec, gf, ga) {
+  rec.gf += gf; rec.ga += ga;
+  if (gf > ga) rec.w++; else if (gf === ga) rec.d++; else rec.l++;
+}
+
+// Venue form for one team using only games before asOf ("YYYY-MM-DD"; omit
+// for all games). cfg defaults to VENUE; the backtest passes alternatives.
+function venueFormFor(name, asOf, cfg = VENUE) {
+  const t = TEAMS[name];
+  let games = (t.venueGames || []).filter(g => !asOf || g[0] < asOf);
+  if (!games.length) {  // fallback: this season's Champions League games
+    games = playedMatches().filter(m => m.h === name || m.a === name).map(m => {
+      const home = m.h === name;
+      return ["", home ? 1 : 0, home ? m.hs : m.as, home ? m.as : m.hs, "E"];
+    });
   }
+  const side = home => {
+    const at = games.filter(g => !!g[1] === home);  // newest first
+    const lg = at.filter(g => g[4] === "L").slice(0, cfg.league);
+    const eu = at.filter(g => g[4] === "E").slice(0, cfg.europe);
+    const league = emptyRec(), europe = emptyRec();
+    lg.forEach(g => addGame(league, g[2], g[3]));
+    eu.forEach(g => addGame(europe, g[2], g[3]));
+    const wt = lg.length + cfg.euroWeight * eu.length;
+    const pts = r => 3 * r.w + r.d, gd = r => r.gf - r.ga;
+    return {
+      league, europe, wt,
+      pts: pts(league) + cfg.euroWeight * pts(europe),
+      gd: gd(league) + cfg.euroWeight * gd(europe),
+      n: lg.length + eu.length,
+    };
+  };
+  const h = side(true), a = side(false);
+  const wt = h.wt + a.wt || 1;
+  const oPpg = (h.pts + a.pts) / wt, oGd = (h.gd + a.gd) / wt;
+  const edge = s => s.wt ? ((s.pts / s.wt - oPpg) + cfg.goalWeight * (s.gd / s.wt - oGd)) * s.wt / (s.wt + cfg.shrink) : 0;
+  const rec = r => [r.w, r.d, r.l];
+  const sum = (x, y) => [x.w + y.w, x.d + y.d, x.l + y.l];
+  return {
+    home: sum(h.league, h.europe), away: sum(a.league, a.europe),
+    homeLeague: rec(h.league), homeEurope: rec(h.europe), awayLeague: rec(a.league), awayEurope: rec(a.europe),
+    homePpg: h.wt ? h.pts / h.wt : oPpg, awayPpg: a.wt ? a.pts / a.wt : oPpg, overall: oPpg,
+    homeEdge: edge(h), awayEdge: edge(a),
+    splitKnown: !!(t.venueGames && t.venueGames.length),
+  };
+}
+
+function computeVenueForm() {
+  for (const name of Object.keys(TEAMS)) RATINGS[name].venue = venueFormFor(name);
 }
 
 function teamUclRecord(name) {
@@ -206,12 +236,11 @@ function newsShift(name, md) {
 function attackFactor(name, shift = 0) { return Math.exp((RATINGS[name].rating + shift - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].atk; }
 function defenceFactor(name, shift = 0) { return Math.exp(-(RATINGS[name].rating + shift - 75) / RATING_SCALE) * STYLE_GOALS[TEAMS[name].style].def; }
 
+function venueMul(edge, cfg = VENUE) { return clamp(1 + cfg.slope * edge, 1 - cfg.cap, 1 + cfg.cap); }
+
 function venueMultipliers(home, away) {
   const vh = RATINGS[home].venue, va = RATINGS[away].venue;
-  return {
-    home: HOME_XG * clamp(1 + 0.12 * vh.homeEdge, 0.9, 1.1),
-    away: AWAY_XG * clamp(1 + 0.12 * va.awayEdge, 0.9, 1.1),
-  };
+  return { home: HOME_XG * venueMul(vh.homeEdge), away: AWAY_XG * venueMul(va.awayEdge) };
 }
 
 // A fixture can be played away from the home team's ground (m.neutral, e.g.
@@ -329,8 +358,9 @@ function reasonsFor(home, away) {
     out.push("Near-identical overall ratings — a genuine coin-flip on quality.");
   }
   const vh = rh.venue, va = ra.venue;
-  const hRec = vh.home, aRec = va.away;
-  out.push(`Last 10 at home, ${home}: ${hRec.join("-")} (W-D-L) · last 10 away, ${away}: ${aRec.join("-")}.`);
+  const pctMul = e => signed((venueMul(e) - 1) * 100);
+  out.push(`${home} at home: league ${vh.homeLeague.join("-")}, Europe ${vh.homeEurope.join("-")} (W-D-L) → ${pctMul(vh.homeEdge)}% xG · `
+    + `${away} away: league ${va.awayLeague.join("-")}, Europe ${va.awayEurope.join("-")} → ${pctMul(va.awayEdge)}% xG.`);
   const mb = matchupBonus(TEAMS[home].style, TEAMS[away].style) - matchupBonus(TEAMS[away].style, TEAMS[home].style);
   if (Math.abs(mb) >= 3) {
     const fav = mb > 0 ? home : away, other = mb > 0 ? away : home;
