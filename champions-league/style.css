@@ -295,3 +295,12 @@ code { background: var(--bg-card-2); padding: 1px 5px; border-radius: 3px; }
   .fx-reco { grid-area: reco; }
   .fx-reco .tag { white-space: normal; display: inline-block; }
 }
+
+/* day separators + lean picks */
+.fx-day { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: var(--bg); border-top: 1px solid var(--border); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.fx-list > .fx-day:first-child { border-top: none; }
+.fx-day-n { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.fx-day + .fx-item { border-top: 1px solid var(--border); }
+.tag-lean { background: rgba(224, 162, 11, 0.16); color: var(--amber); }
+.odd-lean { border-color: var(--amber); }
+.odd-lean .odd-val { color: var(--amber); }
