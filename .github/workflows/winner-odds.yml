@@ -1,10 +1,12 @@
 name: Winner odds
 
-# Once a week, Sunday night (22:17 Israel winter time = 20:17 UTC): pull
-# Winner's 1/X/2 prices (via 365Scores) for Champions League games in the
-# next 4 days — the Tuesday and Wednesday games — into
-# champions-league/data.js, commit if anything changed, and rebuild the
-# GitHub Pages site. In weeks without games a run ends in seconds.
+# Once a week, Sunday night (22:17 Israel winter time = 20:17 UTC):
+#  1. refresh every team's domestic table and last-10 home/away games
+#     (tools/update_teams.py, 365Scores);
+#  2. pull Winner's 1/X/2 prices (via 365Scores) for Champions League games in
+#     the next 4 days — the Tuesday and Wednesday games;
+# then commit champions-league/data.js if anything changed and rebuild the
+# GitHub Pages site. In weeks without games the odds step does nothing.
 on:
   schedule:
     - cron: "17 20 * * 0"
@@ -24,6 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Refresh team data
+        # a team that fails to update is reported (and the run marked) but
+        # doesn't block the odds
+        continue-on-error: true
+        run: python3 champions-league/tools/update_teams.py
+
       - name: Fetch Winner odds
         run: python3 champions-league/tools/fetch_odds.py
 
@@ -32,12 +40,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet; then
-            echo "No new odds."
+            echo "Nothing changed."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Winner odds update $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git commit -am "Weekly update: team data and Winner odds $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push
           # pushes made with the workflow token don't start a Pages build on their own
           gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "Pages build request failed; it will rebuild on the next push."

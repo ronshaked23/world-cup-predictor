@@ -41,4 +41,4 @@ Ratings, predictions and odds all recompute from these inputs.
 
 ## Winner odds (automatic)
 
-[`tools/fetch_odds.py`](tools/fetch_odds.py) pulls Winner's 1/X/2 prices from 365Scores (Winner is the bookmaker it shows Israeli users) into `MATCHES[].odds`, for games kicking off in the next 4 days. The [`Winner odds`](../.github/workflows/winner-odds.yml) GitHub Action runs it every Sunday night and commits any change, so Tuesday's and Wednesday's games get their odds automatically. It can also be run by hand from the Actions tab (Run workflow).
+[`tools/fetch_odds.py`](tools/fetch_odds.py) pulls Winner's 1/X/2 prices from 365Scores (Winner is the bookmaker it shows Israeli users) into `MATCHES[].odds`, for games kicking off in the next 4 days. The [`Winner odds`](../.github/workflows/winner-odds.yml) GitHub Action runs it every Sunday night, together with [`tools/update_teams.py`](tools/update_teams.py) (every team's domestic table and last-10 home/away games, also from 365Scores), and commits any change, so Tuesday's and Wednesday's games get their odds automatically. It can also be run by hand from the Actions tab (Run workflow).

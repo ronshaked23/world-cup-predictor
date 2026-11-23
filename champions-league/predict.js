@@ -214,9 +214,14 @@ function venueMultipliers(home, away) {
   };
 }
 
+// A fixture can be played away from the home team's ground (m.neutral, e.g.
+// Shakhtar's home games abroad): then neither side gets home advantage.
+function fixtureOf(home, away, md) { return MATCHES.find(m => m.md === md && m.h === home && m.a === away); }
+
 function expectedGoals(home, away, md, ignoreNews) {
   const th = TEAMS[home], ta = TEAMS[away];
-  const v = venueMultipliers(home, away);
+  const fx = fixtureOf(home, away, md);
+  const v = fx && fx.neutral ? { home: 1, away: 1 } : venueMultipliers(home, away);
   const env = Math.pow(RATINGS[home].openness * RATINGS[away].openness, 0.25);
   const zero = { atk: 0, def: 0 };
   const nh = ignoreNews ? zero : newsShift(home, md), na = ignoreNews ? zero : newsShift(away, md);
@@ -294,10 +299,16 @@ function predictMatch(home, away, md, ignoreNews = false) {
   const res = {
     home, away, md, xgH, xgA, dist, pick, over25, btts, news,
     pH: dist.winA, pD: dist.draw, pA: dist.winB,
-    reasons: reasonsFor(home, away, xgH, xgA),
+    reasons: neutralNote(home, away, md).concat(reasonsFor(home, away, xgH, xgA)),
   };
   predictionCache[key] = res;
   return res;
+}
+
+function neutralNote(home, away, md) {
+  const fx = fixtureOf(home, away, md);
+  if (!fx || !fx.neutral) return [];
+  return [`Neutral venue${fx.venue ? " (" + fx.venue + ")" : ""}: ${home} get no home advantage.`];
 }
 
 function signed(n, digits = 0) { const v = n.toFixed(digits); return n >= 0 ? "+" + v : v; }

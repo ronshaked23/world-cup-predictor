@@ -407,7 +407,7 @@ function renderTeams() {
       ${barRow("Form", r.form, `Domestic ${r.domRaw.toFixed(1)} · Champions League ${r.uclForm.toFixed(1)}`)}
       <div class="facts">
         <div><span>2025-26</span>${ordinal(t.last.pos)}, ${t.last.pts} pts in ${t.last.gp}${lastUcl}</div>
-        <div><span>This season</span>${ordinal(d.pos)} in league · ${d.w}-${d.d}-${d.l}, ${d.gf}:${d.ga}${d.stale ? ' <span class="muted">(as of Oct 26)</span>' : ""}</div>
+        <div><span>This season</span>${ordinal(d.pos)} in league · ${d.w}-${d.d}-${d.l}, ${d.gf}:${d.ga}${t.checked ? ` <span class="muted">(checked ${t.checked})</span>` : ""}</div>
         <div><span>Last 10 home</span>${recordStr(v.home)} · ${v.homePpg.toFixed(2)} pts/g ${venueTag(v.homePpg)}</div>
         <div><span>Last 10 away</span>${recordStr(v.away)} · ${v.awayPpg.toFixed(2)} pts/g ${venueTag(v.awayPpg)}</div>
         ${v.splitKnown ? "" : `<div class="muted small">No match-by-match data for this league — venue form uses this season's Champions League games only.</div>`}
@@ -470,7 +470,7 @@ function renderMethod() {
     <h3>Format reminder</h3>
     <p>36 teams, 8 games each (4 home, 4 away). 1-8 go straight to the round of 16, 9-24 play two-legged play-offs in February, and 25-36 are out. The knockout bracket starts in February 2027 and will be added once the league phase ends.</p>
     <h3>Data caveats</h3>
-    <p>Updated ${SNAPSHOT_DATE}. The Champions League table matches ESPN's official standings. Domestic tables, the last two seasons' final tables and every team's last-10 home/away games come from ESPN. ESPN doesn't cover the Czech, Ukrainian, Slovak and Azerbaijani leagues, so Slavia, Shakhtar, Slovan and Sabah keep their October 26 domestic numbers, and their venue form uses Champions League games only. In Belgium, Greece and Austria, points are split after the regular season, so last season's points per game there is approximate.</p>
+    <p>Updated ${SNAPSHOT_DATE}. The Champions League table matches ESPN's official standings. The last two seasons' final tables come from ESPN. Every team's current domestic table and last-10 home/away games come from 365Scores, which covers all 16 leagues, and are refreshed every Sunday night along with Winner's odds. The Team Ratings tab shows when each team was last checked. In Belgium, Greece and Austria, points are split after the regular season, so last season's points per game there is approximate.</p>
     <h3>Scorecard</h3>
     <p>From Matchday 4 on, the model's headline pick is saved before kickoff, so the Matches tab shows a real scorecard: 3 points for an exact score, 1 for the right result.</p>`;
 }
