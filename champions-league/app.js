@@ -120,16 +120,19 @@ function resultRow(m) {
   const outc = (a, b) => a > b ? "H" : a < b ? "A" : "D";
   const actual = outc(m.hs, m.as);
   const favP = { H: p.pH, D: p.pD, A: p.pA }[actual];
-  const g = gradePick(m, "pred"), gn = gradePick(m, "predNews");
+  const g = gradePick(m, "pred"), gn = gradePick(m, "predNews"), b = gradeBet(m);
   const tag = (gr, key, label) => `<span class="tag tag-${gr.cat}" title="Stored before kickoff">${label} ${m[key][0]}-${m[key][1]} · ${gr.label}</span>`;
   const note = g
     ? tag(g, "pred", "pick") + (gn ? " " + tag(gn, "predNews", "+news") : "")
     : (favP < 0.25 ? `<span class="tag tag-upset" title="Today's model gives this result ${pct(favP)}">upset · ${pct(favP)}</span>` : "");
+  const betTag = b
+    ? `<span class="tag ${b.won ? "tag-good" : "tag-bad"}" title="Winner pick saved before kickoff">${m.bet[2] === "value" ? "★" : "◆"} ${outcomeName(m, m.bet[0])} @ ${m.bet[1].toFixed(2)} · ${b.won ? "won " + signed(b.profit, 2) : "lost −1"}</span> `
+    : "";
   return `<div class="match-row">
     <span class="match-team home">${teamLabel(m.h)}</span>
     <span class="match-score">${m.hs} – ${m.as}</span>
     <span class="match-team away">${teamLabel(m.a)}</span>
-    <span class="match-note">${note}</span>
+    <span class="match-note">${betTag}${note}</span>
   </div>`;
 }
 
@@ -143,6 +146,22 @@ function gradePick(m, key = "pred") {
   if (pk[0] === m.hs && pk[1] === m.as) return { cat: "exact", label: "exact ✓", pts: 3 };
   if (outc(pk[0], pk[1]) === outc(m.hs, m.as)) return { cat: "good", label: "result ✓", pts: 1 };
   return { cat: "bad", label: "miss", pts: 0 };
+}
+
+// A saved Winner pick (m.bet) on a finished game: 1 unit staked.
+function gradeBet(m) {
+  if (!Array.isArray(m.bet) || m.hs == null) return null;
+  const outcome = m.hs > m.as ? 0 : m.hs === m.as ? 1 : 2;
+  const won = outcome === m.bet[0];
+  return { won, profit: won ? m.bet[1] - 1 : -1 };
+}
+
+function betScorecard(ms) {
+  const graded = ms.map(gradeBet).filter(Boolean);
+  if (!graded.length) return "";
+  const won = graded.filter(g => g.won).length;
+  const units = graded.reduce((s, g) => s + g.profit, 0);
+  return `Winner picks: <strong>${won}/${graded.length}</strong> won · <strong class="${units >= 0 ? "pos" : "neg"}">${signed(units, 2)} units</strong> (1 unit per pick)`;
 }
 
 function scorecard(ms, key = "pred", label = "Picks") {
@@ -202,60 +221,15 @@ function predictionCard(m) {
 }
 
 // ---------------------------------------------------------------------------
-// WINNER ODDS + RECOMMENDATIONS
-// Odds come from data.js (m.odds = [1, X, 2], Winner's decimal odds) or from
-// the viewer's own entry in the expanded card, kept in this browser only.
-// Each game's best bet is the outcome with the highest expected return
-// (model probability × Winner's price − 1) among prices of at least MIN_ODDS
-// that we rate at least MIN_PROB — shorter prices aren't worth it, longer
-// shots are too swingy. Every day gets every value bet (expected return ≥
-// MIN_EDGE), topped up with the next-best games so there are at least
-// PER_DAY picks; those top-ups are marked "lean" and show their (possibly
-// negative) expected return.
+// WINNER ODDS + RECOMMENDATIONS — the pick logic lives in predict.js (so
+// tools/store_picks.js can run it too); this part is the browser side: odds a
+// viewer types into a card (kept in this browser only) and the filter state.
 // ---------------------------------------------------------------------------
-const MIN_ODDS = 1.4;
-const MIN_EDGE = 0.03;
-const MIN_PROB = 0.33;
-const PER_DAY = 3;
-const OUTCOMES = ["1", "X", "2"];
 let recoOnly = false;
 
-function oddsKey(m) { return `odds:${m.md}:${m.h}:${m.a}`; }
 function localOdds(m) {
   try { const v = JSON.parse(localStorage.getItem(oddsKey(m))); return Array.isArray(v) && v.length === 3 ? v : null; }
   catch (e) { return null; }
-}
-function oddsFor(m) { return localOdds(m) || m.odds || null; }
-
-function recommendation(m) {
-  const o = oddsFor(m);
-  if (!o) return null;
-  const p = predictMatch(m.h, m.a, m.md);
-  const probs = [p.pH, p.pD, p.pA];
-  const bet = i => ({ i, label: OUTCOMES[i], odds: o[i], prob: probs[i], ev: probs[i] * o[i] - 1, fair: 1 / probs[i] });
-  const options = [0, 1, 2].filter(i => o[i] >= MIN_ODDS && probs[i] >= MIN_PROB).map(bet).sort((a, b) => b.ev - a.ev);
-  if (!options.length) {
-    const fav = bet(probs.indexOf(Math.max(...probs)));
-    return { ...fav, eligible: false, value: false,
-      why: fav.odds < MIN_ODDS ? `the likely outcome is priced ${fav.odds.toFixed(2)}, below ${MIN_ODDS}` : `nothing we rate ${Math.round(MIN_PROB * 100)}%+ is priced at ${MIN_ODDS}+` };
-  }
-  return { ...options[0], eligible: true, value: options[0].ev >= MIN_EDGE };
-}
-
-function dayOf(m) { return m.day || ""; }
-
-// The picks for a list of games: per day, all value bets plus the best
-// remaining games until there are PER_DAY. Map of oddsKey -> recommendation.
-function dayPicks(games) {
-  const picks = new Map();
-  [...new Set(games.map(dayOf))].forEach(day => {
-    games.filter(m => dayOf(m) === day)
-      .map(m => ({ m, r: recommendation(m) }))
-      .filter(x => x.r && x.r.eligible)
-      .sort((a, b) => b.r.ev - a.r.ev)
-      .forEach((x, k) => { if (x.r.value || k < PER_DAY) picks.set(oddsKey(x.m), { ...x.r, tier: x.r.value ? "value" : "lean" }); });
-  });
-  return picks;
 }
 
 let PICKS = new Map();
@@ -347,9 +321,11 @@ function renderMatches(keepOpen) {
     const sc = scorecard(played);
     const season = scorecard(playedMatches());
     const nc = newsComparison(played), ncSeason = newsComparison(playedMatches());
+    const bc = betScorecard(played), bcSeason = betScorecard(playedMatches());
     summary = `<div class="summary-bar">Matchday ${currentMd}: <strong>${goals} goals</strong> in ${played.length} games (${(goals / played.length).toFixed(2)} per game) · home wins ${homeW}, draws ${draws}, away wins ${played.length - homeW - draws}
       ${sc ? `<div class="sc-line">${sc}${season !== sc ? ` <span class="muted">· season: ${season.replace("Picks: ", "")}</span>` : ""}</div>` : ""}
-      ${nc ? `<div class="sc-line">${nc}${ncSeason !== nc ? ` <span class="muted">· season: ${ncSeason}</span>` : ""}</div>` : ""}</div>`;
+      ${nc ? `<div class="sc-line">${nc}${ncSeason !== nc ? ` <span class="muted">· season: ${ncSeason}</span>` : ""}</div>` : ""}
+      ${bc ? `<div class="sc-line">${bc}${bcSeason !== bc ? ` <span class="muted">· season: ${bcSeason.replace("Winner picks: ", "")}</span>` : ""}</div>` : ""}</div>`;
   } else {
     const fav = upcoming.map(m => predictMatch(m.h, m.a, m.md)).map(p => ({ p, best: Math.max(p.pH, p.pA) })).sort((a, b) => b.best - a.best)[0];
     const close = upcoming.map(m => predictMatch(m.h, m.a, m.md)).sort((a, b) => Math.abs(a.pH - a.pA) - Math.abs(b.pH - b.pA))[0];

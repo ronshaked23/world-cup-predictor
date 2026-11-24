@@ -5,6 +5,7 @@ name: Winner odds
 #     (tools/update_teams.py, 365Scores);
 #  2. pull Winner's 1/X/2 prices (via 365Scores) for Champions League games in
 #     the next 4 days — the Tuesday and Wednesday games;
+#  3. save that matchday's Winner picks (tools/store_picks.js);
 # then commit champions-league/data.js if anything changed and rebuild the
 # GitHub Pages site. In weeks without games the odds step does nothing.
 on:
@@ -35,6 +36,10 @@ jobs:
       - name: Fetch Winner odds
         run: python3 champions-league/tools/fetch_odds.py
 
+      - name: Save this matchday's picks
+        # the Monday double check re-saves them after the team-news check
+        run: node champions-league/tools/store_picks.js
+
       - name: Commit and publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -45,7 +50,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Weekly update: team data and Winner odds $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git commit -am "Weekly update: team data, Winner odds and picks $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push
           # pushes made with the workflow token don't start a Pages build on their own
           gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "Pages build request failed; it will rebuild on the next push."
