@@ -450,4 +450,71 @@ function simulateLeague(nSims = 10000, seed = 20261026) {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// WINNER ODDS + RECOMMENDATIONS
+// Odds come from data.js (m.odds = [1, X, 2], Winner's decimal odds) or from
+// the viewer's own entry in the expanded card, kept in this browser only.
+// Each game's best bet is the outcome with the highest expected return
+// (model probability × Winner's price − 1) among prices of at least MIN_ODDS
+// that we rate at least MIN_PROB — shorter prices aren't worth it, longer
+// shots are too swingy. Every day gets every value bet (expected return ≥
+// MIN_EDGE), topped up with the next-best games so there are at least
+// PER_DAY picks; those top-ups are marked "lean" and show their (possibly
+// negative) expected return.
+// ---------------------------------------------------------------------------
+const MIN_ODDS = 1.4;
+const MIN_EDGE = 0.03;
+const MIN_PROB = 0.33;
+const PER_DAY = 3;
+const OUTCOMES = ["1", "X", "2"];
+
+function oddsKey(m) { return `odds:${m.md}:${m.h}:${m.a}`; }
+// Odds a viewer typed in (browser only, see app.js) win over data.js.
+function oddsFor(m) { return (typeof localOdds === "function" && localOdds(m)) || m.odds || null; }
+
+function recommendation(m) {
+  const o = oddsFor(m);
+  if (!o) return null;
+  const p = predictMatch(m.h, m.a, m.md);
+  const probs = [p.pH, p.pD, p.pA];
+  const bet = i => ({ i, label: OUTCOMES[i], odds: o[i], prob: probs[i], ev: probs[i] * o[i] - 1, fair: 1 / probs[i] });
+  const options = [0, 1, 2].filter(i => o[i] >= MIN_ODDS && probs[i] >= MIN_PROB).map(bet).sort((a, b) => b.ev - a.ev);
+  if (!options.length) {
+    const fav = bet(probs.indexOf(Math.max(...probs)));
+    return { ...fav, eligible: false, value: false,
+      why: fav.odds < MIN_ODDS ? `the likely outcome is priced ${fav.odds.toFixed(2)}, below ${MIN_ODDS}` : `nothing we rate ${Math.round(MIN_PROB * 100)}%+ is priced at ${MIN_ODDS}+` };
+  }
+  return { ...options[0], eligible: true, value: options[0].ev >= MIN_EDGE };
+}
+
+function dayOf(m) { return m.day || ""; }
+
+// The picks for a list of games: per day, all value bets plus the best
+// remaining games until there are PER_DAY. Map of oddsKey -> recommendation.
+// A day whose picks were saved before kickoff (m.bet, by tools/store_picks.js)
+// shows those saved picks, so what was recommended doesn't drift afterwards.
+function savedPick(m) {
+  const [i, odds, tier] = m.bet;
+  const p = predictMatch(m.h, m.a, m.md);
+  const prob = [p.pH, p.pD, p.pA][i];
+  return { i, label: OUTCOMES[i], odds, tier, prob, ev: prob * odds - 1, fair: 1 / prob, saved: true };
+}
+
+function dayPicks(games) {
+  const picks = new Map();
+  [...new Set(games.map(dayOf))].forEach(day => {
+    const ms = games.filter(m => dayOf(m) === day);
+    if (ms.some(m => m.bet)) {
+      ms.filter(m => m.bet).forEach(m => picks.set(oddsKey(m), savedPick(m)));
+      return;
+    }
+    ms
+      .map(m => ({ m, r: recommendation(m) }))
+      .filter(x => x.r && x.r.eligible)
+      .sort((a, b) => b.r.ev - a.r.ev)
+      .forEach((x, k) => { if (x.r.value || k < PER_DAY) picks.set(oddsKey(x.m), { ...x.r, tier: x.r.value ? "value" : "lean" }); });
+  });
+  return picks;
+}
+
 computeRatings();

@@ -309,3 +309,12 @@ code { background: var(--bg-card-2); padding: 1px 5px; border-radius: 3px; }
 .facts .vf-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; align-items: baseline; gap: 6px; }
 .facts .vf-row span:first-child { width: auto; }
 .facts .rec { white-space: nowrap; }
+.sc-line .pos { color: var(--green); }
+.sc-line .neg { color: var(--red); }
+/* results: room for the saved Winner pick next to the score pick */
+.results-list .match-row { grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr) 250px; }
+.results-list .match-note { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+@media (max-width: 640px) {
+  .results-list .match-row { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); }
+  .results-list .match-note { align-items: center; }
+}
