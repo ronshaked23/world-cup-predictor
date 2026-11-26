@@ -7,7 +7,7 @@
 // current — every rating recomputes.
 // ---------------------------------------------------------------------------
 
-const SNAPSHOT_DATE = "November 24, 2026";
+const SNAPSHOT_DATE = "November 26, 2026";
 
 // Playstyle categories (same rock-paper-scissors system as the World Cup site)
 const STYLES = {
@@ -440,15 +440,15 @@ const MATCHES = [
   { md: 5, h: "RB Leipzig", a: "Lens", hs: 3, as: 1, pred: [3, 1], odds: [1.35, 5.20, 6.00], oddsDate: "Nov 23" },
   { md: 5, h: "Real Madrid", a: "PSV", hs: 5, as: 1, pred: [3, 1], odds: [1.15, 7.20, 10.00], oddsDate: "Nov 23" },
   { md: 5, h: "Slovan Bratislava", a: "Real Betis", hs: 0, as: 2, pred: [0, 3], odds: [9.00, 5.80, 1.20], oddsDate: "Nov 23" },
-  { md: 5, h: "Sabah", a: "Barcelona", day: "Wed Nov 25", pred: [0, 3] },
-  { md: 5, h: "Slavia Praha", a: "Villarreal", day: "Wed Nov 25", pred: [1, 2], odds: [2.90, 3.50, 2.10], oddsDate: "Nov 23", bet: [2, 2.10, "lean"] },
-  { md: 5, h: "Atletico Madrid", a: "Viking", day: "Wed Nov 25", pred: [3, 0], odds: [1.10, 7.80, 16.00], oddsDate: "Nov 23" },
-  { md: 5, h: "Club Brugge", a: "Liverpool", day: "Wed Nov 25", pred: [1, 2], odds: [3.95, 4.20, 1.60], oddsDate: "Nov 23" },
-  { md: 5, h: "Inter", a: "Stuttgart", day: "Wed Nov 25", pred: [2, 1], odds: [1.35, 5.00, 5.40], oddsDate: "Nov 23" },
-  { md: 5, h: "Shakhtar", a: "Fenerbahce", day: "Wed Nov 25", neutral: true, venue: "Stamford Bridge, London", pred: [2, 1], predNews: [2, 1], odds: [2.50, 3.30, 2.45], oddsDate: "Nov 23", bet: [0, 2.50, "lean"] },
-  { md: 5, h: "Lille", a: "Bayern", day: "Wed Nov 25", pred: [1, 3], odds: [4.60, 4.00, 1.55], oddsDate: "Nov 23" },
-  { md: 5, h: "PSG", a: "Roma", day: "Wed Nov 25", pred: [3, 1], odds: [1.35, 4.90, 6.20], oddsDate: "Nov 23" },
-  { md: 5, h: "Sporting CP", a: "Man United", day: "Wed Nov 25", pred: [2, 1], predNews: [2, 1], odds: [2.35, 3.45, 2.50], oddsDate: "Nov 23", bet: [0, 2.35, "value"] },
+  { md: 5, h: "Sabah", a: "Barcelona", hs: 1, as: 4, pred: [0, 3] },
+  { md: 5, h: "Slavia Praha", a: "Villarreal", hs: 0, as: 1, pred: [1, 2], odds: [2.90, 3.50, 2.10], oddsDate: "Nov 23", bet: [2, 2.10, "lean"] },
+  { md: 5, h: "Atletico Madrid", a: "Viking", hs: 2, as: 0, pred: [3, 0], odds: [1.10, 7.80, 16.00], oddsDate: "Nov 23" },
+  { md: 5, h: "Club Brugge", a: "Liverpool", hs: 0, as: 3, pred: [1, 2], odds: [3.95, 4.20, 1.60], oddsDate: "Nov 23" },
+  { md: 5, h: "Inter", a: "Stuttgart", hs: 2, as: 0, pred: [2, 1], odds: [1.35, 5.00, 5.40], oddsDate: "Nov 23" },
+  { md: 5, h: "Shakhtar", a: "Fenerbahce", hs: 0, as: 1, neutral: true, venue: "Stamford Bridge, London", pred: [2, 1], predNews: [2, 1], odds: [2.50, 3.30, 2.45], oddsDate: "Nov 23", bet: [0, 2.50, "lean"] },
+  { md: 5, h: "Lille", a: "Bayern", hs: 2, as: 1, pred: [1, 3], odds: [4.60, 4.00, 1.55], oddsDate: "Nov 23" },
+  { md: 5, h: "PSG", a: "Roma", hs: 2, as: 2, pred: [3, 1], odds: [1.35, 4.90, 6.20], oddsDate: "Nov 23" },
+  { md: 5, h: "Sporting CP", a: "Man United", hs: 2, as: 2, pred: [2, 1], predNews: [2, 1], odds: [2.35, 3.45, 2.50], oddsDate: "Nov 23", bet: [0, 2.35, "value"] },
   // Matchday 6
   { md: 6, h: "Viking", a: "Feyenoord", day: "Tue Dec 8" },
   { md: 6, h: "Villarreal", a: "Sabah", day: "Tue Dec 8" },
